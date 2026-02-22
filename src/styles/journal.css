@@ -1,0 +1,108 @@
+.journal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.3);
+  animation: journal-fade-in 0.2s ease-out;
+}
+
+.journal-panel {
+  background: #faf8f5;
+  border-radius: 16px;
+  padding: 24px;
+  width: 420px;
+  max-height: 500px;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  border: 2px solid #ddd;
+}
+
+.journal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.journal-title {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 18px;
+  color: #333;
+  font-weight: bold;
+}
+
+.journal-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  transition: all 0.15s ease;
+}
+
+.journal-close:hover {
+  border-color: #e8a33c;
+  color: #333;
+  background: #fff3e0;
+}
+
+.journal-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.journal-entry {
+  background: white;
+  border: 1px solid #e8e4df;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.journal-date {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: #e8a33c;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.journal-text {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 13px;
+  color: #444;
+  line-height: 1.5;
+}
+
+.journal-loading {
+  text-align: center;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 13px;
+  color: #999;
+  padding: 32px 0;
+}
+
+.journal-empty {
+  text-align: center;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 13px;
+  color: #999;
+  padding: 32px 0;
+}
+
+@keyframes journal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

@@ -1,0 +1,78 @@
+.pet-container {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 1000;
+  transition: transform 0.1s ease;
+}
+
+.pet-container:hover {
+  transform: scale(1.1);
+}
+
+.pet-container.dragging {
+  cursor: grabbing;
+  transform: scale(1.15);
+}
+
+.pet-sprite {
+  width: 64px;
+  height: 64px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.pet-sprite.idle {
+  background-size: 512px 64px;
+  animation: sprite-idle 1.2s steps(8) infinite;
+}
+
+.pet-sprite.walk {
+  background-size: 512px 64px;
+  animation: sprite-walk 0.8s steps(8) infinite;
+}
+
+.pet-sprite.nap {
+  background-size: 256px 64px;
+  animation: sprite-nap 2.4s steps(4) infinite;
+}
+
+.pet-sprite.flip {
+  transform: scaleX(-1);
+}
+
+.nap-zzz {
+  position: absolute;
+  top: -10px;
+  right: -5px;
+  font-size: 14px;
+  font-family: 'Comic Sans MS', cursive;
+  color: #8B5E1C;
+  animation: zzz-float 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes sprite-idle {
+  from { background-position: 0 0; }
+  to { background-position: -512px 0; }
+}
+
+@keyframes sprite-walk {
+  from { background-position: 0 0; }
+  to { background-position: -512px 0; }
+}
+
+@keyframes sprite-nap {
+  from { background-position: 0 0; }
+  to { background-position: -256px 0; }
+}
+
+@keyframes zzz-float {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(-8px); opacity: 1; }
+}
