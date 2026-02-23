@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Desktop Pet</title>
+  <link rel="icon" href="icon.png" type="image/png">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #faf8f5;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 80px 24px 40px;
+      max-width: 600px;
+    }
+
+    .cat-container {
+      position: relative;
+      width: 128px;
+      height: 128px;
+      margin: 0 auto 32px;
+    }
+
+    .cat-sprite {
+      width: 128px;
+      height: 128px;
+      background-image: url('cat-idle.png');
+      background-size: 1024px 128px;
+      background-repeat: no-repeat;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      animation: sprite-idle 1.2s steps(8) infinite;
+    }
+
+    @keyframes sprite-idle {
+      from { background-position: 0 0; }
+      to { background-position: -1024px 0; }
+    }
+
+    h1 {
+      font-size: 48px;
+      font-weight: 800;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    h1 span {
+      color: #e8a33c;
+    }
+
+    .tagline {
+      font-size: 20px;
+      color: #888;
+      font-weight: 600;
+      margin-bottom: 40px;
+      line-height: 1.5;
+    }
+
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 40px;
+      background: #e8a33c;
+      color: white;
+      font-family: 'Nunito', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(232, 163, 60, 0.35);
+    }
+
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(232, 163, 60, 0.45);
+      background: #d4922e;
+    }
+
+    .download-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .platform-note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #bbb;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      max-width: 640px;
+      padding: 40px 24px 60px;
+      width: 100%;
+    }
+
+    .feature {
+      background: white;
+      border: 2px solid #eee;
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .feature:hover {
+      border-color: #e8a33c;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .feature-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .feature h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .feature p {
+      font-size: 13px;
+      color: #999;
+      line-height: 1.5;
+    }
+
+    .footer {
+      padding: 24px;
+      font-size: 12px;
+      color: #ccc;
+    }
+
+    .footer a {
+      color: #e8a33c;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="cat-container">
+      <div class="cat-sprite"></div>
+    </div>
+    <h1>Desktop <span>Pet</span></h1>
+    <p class="tagline">A little cat that lives on your desktop.<br>Chat with it, watch it explore, and hang out with friends.</p>
+    <a id="download-btn" class="download-btn" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      <span id="download-label">Download for macOS</span>
+    </a>
+    <p class="platform-note" id="platform-note">Requires macOS 12 or later</p>
+  </div>
+
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">🐱</div>
+      <h3>Always On Screen</h3>
+      <p>Your cat roams your desktop, naps, and reacts to what you're doing.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">💬</div>
+      <h3>AI Chat</h3>
+      <p>Talk to your cat and get witty, context-aware responses.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🤝</div>
+      <h3>Hang Out</h3>
+      <p>Add friends and your cats can visit each other's desktops.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🎨</div>
+      <h3>Customize</h3>
+      <p>Pick from different breeds, colors, or import your own sprites.</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    Made with care &mdash; <a href="https://github.com/jacksonspindle/desktop-pet">GitHub</a>
+  </div>
+
+  <script>
+    // Detect platform and update download link
+    const btn = document.getElementById('download-btn');
+    const label = document.getElementById('download-label');
+    const note = document.getElementById('platform-note');
+    const ua = navigator.userAgent.toLowerCase();
+
+    // Point to GitHub Releases latest
+    const repo = 'jacksonspindle/desktop-pet';
+    const tag = 'v0.1.0';
+    const base = `https://github.com/${repo}/releases/download/${tag}`;
+
+    if (ua.includes('mac') || ua.includes('darwin')) {
+      btn.href = `${base}/Desktop.Pet_0.1.0_aarch64.dmg`;
+      label.textContent = 'Download for macOS';
+      note.textContent = 'Requires macOS 12 or later';
+    } else if (ua.includes('win')) {
+      btn.href = `${base}/Desktop.Pet_0.1.0_x64-setup.exe`;
+      label.textContent = 'Download for Windows';
+      note.textContent = 'Requires Windows 10 or later';
+    } else {
+      btn.href = `https://github.com/${repo}/releases/tag/${tag}`;
+      label.textContent = 'View Downloads';
+      note.textContent = 'macOS and Windows available';
+    }
+  </script>
+</body>
+</html>
