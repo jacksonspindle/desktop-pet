@@ -97,6 +97,25 @@
       height: 20px;
     }
 
+    .download-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .download-alt {
+      font-size: 13px;
+      color: #e8a33c;
+      text-decoration: none;
+      font-weight: 600;
+      display: none;
+    }
+
+    .download-alt:hover {
+      text-decoration: underline;
+    }
+
     .platform-note {
       margin-top: 12px;
       font-size: 13px;
@@ -162,14 +181,17 @@
     </div>
     <h1>Desktop <span>Pet</span></h1>
     <p class="tagline">A little cat that lives on your desktop.<br>Chat with it, watch it explore, and hang out with friends.</p>
-    <a id="download-btn" class="download-btn" href="#">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-        <polyline points="7 10 12 15 17 10"/>
-        <line x1="12" y1="15" x2="12" y2="3"/>
-      </svg>
-      <span id="download-label">Download for macOS</span>
-    </a>
+    <div class="download-group">
+      <a id="download-btn" class="download-btn" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span id="download-label">Download for macOS</span>
+      </a>
+      <a id="download-alt" class="download-alt" href="#"></a>
+    </div>
     <p class="platform-note" id="platform-note">Requires macOS 12 or later</p>
   </div>
 
@@ -201,29 +223,34 @@
   </div>
 
   <script>
-    // Detect platform and update download link
     const btn = document.getElementById('download-btn');
     const label = document.getElementById('download-label');
+    const alt = document.getElementById('download-alt');
     const note = document.getElementById('platform-note');
     const ua = navigator.userAgent.toLowerCase();
 
-    // Point to GitHub Releases latest
     const repo = 'jacksonspindle/desktop-pet';
     const tag = 'v0.1.0';
     const base = `https://github.com/${repo}/releases/download/${tag}`;
+    const armDmg = `${base}/Desktop.Pet_0.1.0_aarch64.dmg`;
+    const intelDmg = `${base}/Desktop.Pet_0.1.0_x64.dmg`;
 
     if (ua.includes('mac') || ua.includes('darwin')) {
-      btn.href = `${base}/Desktop.Pet_0.1.0_aarch64.dmg`;
-      label.textContent = 'Download for macOS';
+      // Default to Apple Silicon, show Intel as alternate
+      btn.href = armDmg;
+      label.textContent = 'Download for macOS (Apple Silicon)';
+      alt.href = intelDmg;
+      alt.textContent = 'Intel Mac? Download here';
+      alt.style.display = 'inline';
       note.textContent = 'Requires macOS 12 or later';
     } else if (ua.includes('win')) {
-      btn.href = `${base}/Desktop.Pet_0.1.0_x64-setup.exe`;
+      btn.href = `https://github.com/${repo}/releases/tag/${tag}`;
       label.textContent = 'Download for Windows';
-      note.textContent = 'Requires Windows 10 or later';
+      note.textContent = 'Coming soon';
     } else {
       btn.href = `https://github.com/${repo}/releases/tag/${tag}`;
       label.textContent = 'View Downloads';
-      note.textContent = 'macOS and Windows available';
+      note.textContent = 'macOS (Apple Silicon & Intel) available';
     }
   </script>
 </body>
