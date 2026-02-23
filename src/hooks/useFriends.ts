@@ -372,26 +372,6 @@ export function useFriends(breed: string, color: string) {
     };
   }, [myPetId]);
 
-  // Random visit scheduler (3-5 min interval, 30% chance)
-  useEffect(() => {
-    if (!myPetId) return;
-
-    const scheduleVisit = () => {
-      const delay = (3 * 60 + Math.random() * 2 * 60) * 1000; // 3-5 min
-      return setTimeout(() => {
-        const mutualOnline = friendsRef.current.filter((f) => f.status === "mutual" && f.online);
-        if (mutualOnline.length > 0 && Math.random() < 0.3) {
-          const target = mutualOnline[Math.floor(Math.random() * mutualOnline.length)];
-          sendVisit(target.id);
-        }
-        timerId = scheduleVisit();
-      }, delay);
-    };
-
-    let timerId = scheduleVisit();
-    return () => clearTimeout(timerId);
-  }, [myPetId, sendVisit]);
-
   return {
     myPetId,
     myPetCode,
