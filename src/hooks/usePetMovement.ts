@@ -56,6 +56,8 @@ export function usePetMovement(): PetMovement {
   const animFrameRef = useRef<number>(0);
   const walkTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const prevStateRef = useRef<PetState>("idle");
+  const stateRef = useRef<PetState>(state);
+  stateRef.current = state;
 
   const setState = useCallback((newState: PetState) => {
     setStateInternal(newState);
@@ -152,31 +154,29 @@ export function usePetMovement(): PetMovement {
     const scheduleWalk = () => {
       const delay = 30000 + Math.random() * 60000;
       walkTimeoutRef.current = setTimeout(() => {
-        setStateInternal((currentState) => {
-          if (currentState !== "idle") {
-            scheduleWalk();
-            return currentState;
-          }
-
-          const margin = 80;
-          const maxX = window.innerWidth - margin;
-          const targetX = margin + Math.random() * (maxX - margin);
-          const targetY =
-            window.innerHeight * 0.65 +
-            Math.random() * (window.innerHeight * 0.25);
-
-          const clamped = clampPosition({ x: targetX, y: targetY });
-          targetRef.current = clamped;
-          prevStateRef.current = "idle";
-
-          setPositionRaw((prev) => {
-            setFacingLeft(clamped.x < prev.x);
-            return prev;
-          });
-
+        if (stateRef.current !== "idle") {
           scheduleWalk();
-          return "walking";
+          return;
+        }
+
+        const margin = 80;
+        const maxX = window.innerWidth - margin;
+        const targetX = margin + Math.random() * (maxX - margin);
+        const targetY =
+          window.innerHeight * 0.65 +
+          Math.random() * (window.innerHeight * 0.25);
+
+        const clamped = clampPosition({ x: targetX, y: targetY });
+        targetRef.current = clamped;
+        prevStateRef.current = "idle";
+
+        setPositionRaw((prev) => {
+          setFacingLeft(clamped.x < prev.x);
+          return prev;
         });
+
+        setStateInternal("walking");
+        scheduleWalk();
       }, delay);
     };
 
