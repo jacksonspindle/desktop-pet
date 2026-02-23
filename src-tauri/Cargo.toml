@@ -23,3 +23,4 @@ active-win-pos-rs = "0.8"
 tokio = { version = "1", features = ["full"] }
 core-graphics = "0.24"
 dotenvy = "0.15"
+tauri-plugin-global-shortcut = "2"

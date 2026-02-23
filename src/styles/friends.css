@@ -1,0 +1,526 @@
+.friends-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.3);
+  animation: friends-fade-in 0.2s ease-out;
+}
+
+.friends-panel {
+  background: #faf8f5;
+  border-radius: 16px;
+  padding: 24px;
+  width: 440px;
+  max-height: 520px;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  border: 2px solid #ddd;
+}
+
+.friends-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.friends-title {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 18px;
+  color: #333;
+  font-weight: bold;
+}
+
+.friends-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  transition: all 0.15s ease;
+}
+
+.friends-close:hover {
+  border-color: #e8a33c;
+  color: #333;
+  background: #fff3e0;
+}
+
+/* Your Code Section */
+.friends-code-section {
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: white;
+}
+
+.friends-code-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.friends-code-display {
+  font-family: 'Courier New', monospace;
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  letter-spacing: 2px;
+  flex: 1;
+}
+
+.friends-copy-btn {
+  padding: 4px 10px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 11px;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.friends-copy-btn:hover {
+  border-color: #e8a33c;
+  color: #8B5E1C;
+  background: #fff8f0;
+}
+
+.friends-copy-btn.copied {
+  border-color: #4caf50;
+  color: #4caf50;
+  background: #e8f5e9;
+}
+
+.friends-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.friends-name-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 12px;
+  color: #333;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.friends-name-input:focus {
+  border-color: #e8a33c;
+}
+
+.friends-register-btn {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #e8a33c;
+  border-radius: 10px;
+  background: #fff8f0;
+  cursor: pointer;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 14px;
+  color: #8B5E1C;
+  font-weight: bold;
+  transition: all 0.15s ease;
+}
+
+.friends-register-btn:hover {
+  background: #e8a33c;
+  color: white;
+}
+
+.friends-register-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Add Friend Section */
+.friends-add-section {
+  margin-bottom: 16px;
+}
+
+.friends-add-row {
+  display: flex;
+  gap: 8px;
+}
+
+.friends-add-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  transition: border-color 0.15s ease;
+  text-transform: uppercase;
+}
+
+.friends-add-input:focus {
+  border-color: #e8a33c;
+}
+
+.friends-add-btn {
+  padding: 8px 16px;
+  border: 2px solid #e8a33c;
+  border-radius: 10px;
+  background: #fff8f0;
+  cursor: pointer;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8B5E1C;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.friends-add-btn:hover {
+  background: #e8a33c;
+  color: white;
+}
+
+.friends-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.friends-add-message {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 11px;
+  margin-top: 6px;
+  padding: 0 4px;
+}
+
+.friends-add-message.error {
+  color: #e55;
+}
+
+.friends-add-message.success {
+  color: #4caf50;
+}
+
+/* Friend List */
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.friends-empty {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 12px;
+  color: #aaa;
+  text-align: center;
+  padding: 16px 0;
+}
+
+.friend-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  background: white;
+  transition: all 0.15s ease;
+}
+
+.friend-card:hover {
+  border-color: #e8a33c;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.friend-sprite-preview {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background-size: 384px 48px;
+  background-repeat: no-repeat;
+  animation: theme-preview-anim 1.2s steps(8) infinite;
+  flex-shrink: 0;
+}
+
+.friend-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.friend-name {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.friend-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.friend-status-dot.online {
+  background: #4caf50;
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.5);
+}
+
+.friend-status-dot.offline {
+  background: #ccc;
+}
+
+.friend-code {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  color: #aaa;
+}
+
+.friend-pending {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #fff3e0;
+  color: #e8a33c;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.friend-pending.incoming {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+
+.friend-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.friend-accept-btn {
+  padding: 4px 10px;
+  border: 2px solid #4caf50;
+  border-radius: 8px;
+  background: #e8f5e9;
+  cursor: pointer;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: #2e7d32;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.friend-accept-btn:hover {
+  background: #4caf50;
+  color: white;
+}
+
+.friend-visit-btn {
+  padding: 4px 10px;
+  border: 2px solid #e8a33c;
+  border-radius: 8px;
+  background: #fff8f0;
+  cursor: pointer;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: #8B5E1C;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.friend-visit-btn:hover {
+  background: #e8a33c;
+  color: white;
+}
+
+.friend-remove-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  background: white;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  transition: all 0.15s ease;
+}
+
+.friend-remove-btn:hover {
+  background: #fee;
+  border-color: #e55;
+  color: #c33;
+}
+
+/* Visiting Pet */
+.visiting-pet-container {
+  position: absolute;
+  pointer-events: none;
+  z-index: 999;
+}
+
+.visiting-pet-sprite {
+  width: 64px;
+  height: 64px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.visiting-pet-sprite.idle {
+  background-size: 512px 64px;
+  animation: sprite-idle 1.2s steps(8) infinite;
+}
+
+.visiting-pet-sprite.walk {
+  background-size: 512px 64px;
+  animation: sprite-walk 0.8s steps(8) infinite;
+}
+
+.visiting-pet-sprite.flip {
+  transform: scaleX(-1);
+}
+
+.visiting-pet-nametag {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.visiting-pet-message {
+  position: absolute;
+  bottom: -36px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  color: #333;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  white-space: nowrap;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: message-fade-in 0.3s ease-out;
+}
+
+/* Visitor Interaction Menu */
+.visitor-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  pointer-events: auto;
+  z-index: 998;
+}
+
+.visitor-menu {
+  position: absolute;
+  bottom: 68px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: auto;
+}
+
+.visitor-menu-btn {
+  width: 100%;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 12px;
+  color: #333;
+  cursor: pointer;
+  padding: 0 12px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.visitor-menu-btn:hover {
+  background: #fff8f0;
+  color: #e8a33c;
+}
+
+/* Visitor Chat Input */
+.visitor-chat-container {
+  position: absolute;
+  bottom: 68px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+  pointer-events: auto;
+}
+
+.visitor-chat-input {
+  width: 160px;
+  padding: 6px 10px;
+  border: 2px solid #e8a33c;
+  border-radius: 10px;
+  background: white;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 12px;
+  color: #333;
+  outline: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.visitor-chat-input::placeholder {
+  color: #bbb;
+}
+
+@keyframes friends-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes message-fade-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

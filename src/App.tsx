@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import Pet from "./components/Pet";
 import SpeechBubble from "./components/SpeechBubble";
 import RadialMenu, { MenuAction } from "./components/RadialMenu";
@@ -7,6 +8,8 @@ import SettingsPanel from "./components/SettingsPanel";
 import JournalPanel from "./components/JournalPanel";
 import AchievementsPanel from "./components/AchievementsPanel";
 import AchievementToast from "./components/AchievementToast";
+import FriendsPanel from "./components/FriendsPanel";
+import VisitingPet from "./components/VisitingPet";
 import { usePetMovement } from "./hooks/usePetMovement";
 import { useActiveWindow } from "./hooks/useActiveWindow";
 import { useDialogue } from "./hooks/useDialogue";
@@ -16,8 +19,10 @@ import { useAmbientMusic } from "./hooks/useAmbientMusic";
 import { useEventTracker } from "./hooks/useEventTracker";
 import { useAchievements } from "./hooks/useAchievements";
 import { useJournal } from "./hooks/useJournal";
+import { useFriends } from "./hooks/useFriends";
 
 type InputMode = "chat" | "search" | null;
+const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Space";
 
 export default function App() {
   const {
@@ -37,19 +42,35 @@ export default function App() {
   const { data: eventData, trackEvent } = useEventTracker();
   const { achievements, unlocked, newlyUnlocked, dismissToast, manualUnlock } = useAchievements(eventData);
   const { entries, generateToday, todayGenerated, loading: journalLoading } = useJournal(eventData);
+  const {
+    myPetCode, myPetName, registered, registering, friends, loadingFriends, connected,
+    register: registerPet, addFriend, acceptFriend, removeFriend, sendVisit, startHangout, setMyPetName, currentVisit, dismissVisit,
+  } = useFriends(breed, color);
+
+  const [shortcut, setShortcut] = useState(() =>
+    localStorage.getItem("chat-shortcut") || DEFAULT_SHORTCUT
+  );
+  const handleChangeShortcut = useCallback((s: string) => {
+    setShortcut(s);
+    localStorage.setItem("chat-shortcut", s);
+  }, []);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [inputMode, setInputMode] = useState<InputMode>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [journalOpen, setJournalOpen] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
+  const [friendsOpen, setFriendsOpen] = useState(false);
+  const [visitorPos, setVisitorPos] = useState<{ x: number; y: number } | null>(null);
+  const [visitorOverlay, setVisitorOverlay] = useState(false);
 
-  const overlayOpen = menuOpen || inputMode !== null || dragging || settingsOpen || journalOpen || achievementsOpen;
+  const overlayOpen = menuOpen || inputMode !== null || dragging || settingsOpen || journalOpen || achievementsOpen || friendsOpen || visitorOverlay;
 
   useCursorPassthrough({
     petX: position.x,
     petY: position.y,
     overlayOpen,
+    extraHitZones: visitorPos ? [visitorPos] : undefined,
   });
 
   // Generate pet comment on achievement unlock
@@ -64,6 +85,27 @@ export default function App() {
       }
     }
   }, [newlyUnlocked, generate]);
+
+  // Global shortcut to toggle chat (user-configurable)
+  const inputModeRef = useRef(inputMode);
+  inputModeRef.current = inputMode;
+  useEffect(() => {
+    register(shortcut, (e) => {
+      if (e.state !== "Pressed") return;
+      if (inputModeRef.current === "chat") {
+        setInputMode(null);
+      } else {
+        setMenuOpen(false);
+        setSettingsOpen(false);
+        setJournalOpen(false);
+        setAchievementsOpen(false);
+        setFriendsOpen(false);
+        setInputMode("chat");
+        trackEvent("menuOpen", "chat");
+      }
+    });
+    return () => { unregister(shortcut); };
+  }, [shortcut, trackEvent]);
 
   const handleDragStart = useCallback(() => {
     setDragging(true);
@@ -83,7 +125,7 @@ export default function App() {
   }, [setDragging, trackEvent]);
 
   const handlePetClick = useCallback(() => {
-    if (settingsOpen || journalOpen || achievementsOpen) return;
+    if (settingsOpen || journalOpen || achievementsOpen || friendsOpen) return;
     trackEvent("petClick");
     if (state === "napping") {
       wake();
@@ -99,7 +141,7 @@ export default function App() {
     if (visible && !menuOpen) dismiss();
     setMenuOpen((prev) => !prev);
     setInputMode(null);
-  }, [state, wake, leaveHome, generate, dismiss, visible, menuOpen, settingsOpen, journalOpen, achievementsOpen, trackEvent]);
+  }, [state, wake, leaveHome, generate, dismiss, visible, menuOpen, settingsOpen, journalOpen, achievementsOpen, friendsOpen, trackEvent]);
 
   const handleMenuSelect = useCallback(
     (action: MenuAction) => {
@@ -151,6 +193,10 @@ export default function App() {
           trackEvent("achievements");
           setAchievementsOpen(true);
           break;
+        case "friends":
+          trackEvent("friends");
+          setFriendsOpen(true);
+          break;
       }
     },
     [setState, generate, nap, goHome, dismiss, toggleMusic, musicPlaying, trackEvent, manualUnlock, state],
@@ -170,6 +216,15 @@ export default function App() {
       setTimeout(() => setState("idle"), 3000);
     },
     [inputMode, setState, generate, trackEvent],
+  );
+
+  const handleVisitorChat = useCallback(
+    (message: string) => {
+      if (currentVisit) {
+        sendVisit(currentVisit.fromPetId, message);
+      }
+    },
+    [currentVisit, sendVisit],
   );
 
   const handleThemeImport = useCallback(
@@ -202,7 +257,7 @@ export default function App() {
         onDragEnd={handleDragEnd}
       />
 
-      {visible && !menuOpen && !inputMode && !settingsOpen && !journalOpen && !achievementsOpen && (
+      {visible && !menuOpen && !inputMode && !settingsOpen && !journalOpen && !achievementsOpen && !friendsOpen && (
         <SpeechBubble
           text={loading ? "..." : text}
           x={position.x}
@@ -236,10 +291,12 @@ export default function App() {
           currentBreed={breed}
           currentColor={color}
           customThemes={customThemes}
+          shortcut={shortcut}
           onSelectBreed={selectBreed}
           onSelectColor={selectColor}
           onImport={handleThemeImport}
           onDelete={removeCustomTheme}
+          onChangeShortcut={handleChangeShortcut}
           onClose={() => setSettingsOpen(false)}
         />
       )}
@@ -262,6 +319,37 @@ export default function App() {
           eventData={eventData}
           onOpen={() => manualUnlock("trophy_hunter")}
           onClose={() => setAchievementsOpen(false)}
+        />
+      )}
+
+      {friendsOpen && (
+        <FriendsPanel
+          myPetCode={myPetCode}
+          myPetName={myPetName}
+          registered={registered}
+          registering={registering}
+          connected={connected}
+          friends={friends}
+          loadingFriends={loadingFriends}
+          onRegister={registerPet}
+          onSetName={setMyPetName}
+          onAddFriend={addFriend}
+          onAcceptFriend={acceptFriend}
+          onRemoveFriend={removeFriend}
+          onHangout={startHangout}
+          onClose={() => setFriendsOpen(false)}
+        />
+      )}
+
+      {currentVisit && !settingsOpen && !journalOpen && !achievementsOpen && !friendsOpen && (
+        <VisitingPet
+          visit={currentVisit}
+          userPetX={position.x}
+          userPetY={position.y}
+          onComplete={dismissVisit}
+          onChat={handleVisitorChat}
+          onPositionChange={setVisitorPos}
+          onOverlayChange={setVisitorOverlay}
         />
       )}
 

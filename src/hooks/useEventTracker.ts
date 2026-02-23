@@ -156,7 +156,7 @@ export function useEventTracker() {
       }
 
       // Track menu actions used
-      const menuActions = ["chat", "search", "music", "nap", "home", "settings", "journal", "achievements"];
+      const menuActions = ["chat", "search", "music", "nap", "home", "settings", "journal", "achievements", "friends"];
       if (menuActions.includes(type) && !next.menuActionsUsed.includes(type)) {
         next.menuActionsUsed = [...prev.menuActionsUsed, type];
       }

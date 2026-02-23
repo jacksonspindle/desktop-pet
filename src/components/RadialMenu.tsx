@@ -1,6 +1,6 @@
 import "../styles/menu.css";
 
-export type MenuAction = "chat" | "search" | "music" | "nap" | "home" | "settings" | "journal" | "achievements";
+export type MenuAction = "chat" | "search" | "music" | "nap" | "home" | "settings" | "journal" | "achievements" | "friends";
 
 interface MenuItem {
   action: MenuAction;
@@ -25,10 +25,11 @@ const MENU_ITEMS: MenuItem[] = [
   { action: "settings", icon: "\u2699\uFE0F", label: "Style" },
   { action: "journal", icon: "\uD83D\uDCD6", label: "Journal" },
   { action: "achievements", icon: "\uD83C\uDFC6", label: "Trophies" },
+  { action: "friends", icon: "\uD83D\uDC3E", label: "Friends" },
 ];
 
 const BUTTON_SIZE = 56;
-const RADIUS = 95;
+const RADIUS = 105;
 
 export default function RadialMenu({ x, y, musicPlaying, onSelect, onClose }: RadialMenuProps) {
   const items = MENU_ITEMS.map((item) =>

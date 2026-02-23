@@ -1,16 +1,22 @@
 import { useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
+interface HitZone {
+  x: number;
+  y: number;
+}
+
 interface PassthroughConfig {
   petX: number;
   petY: number;
   overlayOpen: boolean; // true when menu, input, or speech bubble is showing
+  extraHitZones?: HitZone[];
 }
 
-export function useCursorPassthrough({ petX, petY, overlayOpen }: PassthroughConfig) {
+export function useCursorPassthrough({ petX, petY, overlayOpen, extraHitZones }: PassthroughConfig) {
   const ignoring = useRef(true);
-  const configRef = useRef({ petX, petY, overlayOpen });
-  configRef.current = { petX, petY, overlayOpen };
+  const configRef = useRef({ petX, petY, overlayOpen, extraHitZones });
+  configRef.current = { petX, petY, overlayOpen, extraHitZones };
 
   useEffect(() => {
     let running = true;
@@ -27,14 +33,21 @@ export function useCursorPassthrough({ petX, petY, overlayOpen }: PassthroughCon
               await invoke("set_ignore_cursor_events", { ignore: false });
             }
           } else {
-            // Check if mouse is near the pet
+            // Check if mouse is near the pet or any extra hit zones
             const mouse = await invoke<{ x: number; y: number }>("get_mouse_position");
             const hitSize = 48;
-            const near =
+            const nearPet =
               mouse.x >= px - hitSize &&
               mouse.x <= px + hitSize &&
               mouse.y >= py - hitSize &&
               mouse.y <= py + hitSize;
+            const nearExtra = (configRef.current.extraHitZones || []).some((zone) =>
+              mouse.x >= zone.x - hitSize &&
+              mouse.x <= zone.x + hitSize &&
+              mouse.y >= zone.y - hitSize &&
+              mouse.y <= zone.y + hitSize
+            );
+            const near = nearPet || nearExtra;
 
             if (near && ignoring.current) {
               ignoring.current = false;

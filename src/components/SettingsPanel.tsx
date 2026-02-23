@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   SpriteTheme,
   Breed,
@@ -11,14 +11,68 @@ import {
 } from "../hooks/useTheme";
 import "../styles/settings.css";
 
+const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Space";
+
+function formatShortcut(s: string): string {
+  return s
+    .replace(/CommandOrControl/g, "\u2318")
+    .replace(/Control/g, "\u2303")
+    .replace(/Shift/g, "\u21E7")
+    .replace(/Alt/g, "\u2325")
+    .replace(/\+/g, " ")
+    .replace(/Space/g, "Space");
+}
+
+function codeToTauriKey(code: string): string | null {
+  if (code === "Space") return "Space";
+  if (code === "Enter" || code === "NumpadEnter") return "Enter";
+  if (code === "Tab") return "Tab";
+  if (code === "Backspace") return "Backspace";
+  if (code === "Delete") return "Delete";
+  if (code === "Escape") return null;
+  if (code.startsWith("Key")) return code.slice(3);         // KeyA → A
+  if (code.startsWith("Digit")) return code.slice(5);       // Digit1 → 1
+  if (code.startsWith("Arrow")) return code.slice(5);       // ArrowUp → Up
+  if (/^F\d{1,2}$/.test(code)) return code;                 // F1–F24
+  if (code === "Minus") return "-";
+  if (code === "Equal") return "=";
+  if (code === "BracketLeft") return "[";
+  if (code === "BracketRight") return "]";
+  if (code === "Backslash") return "\\";
+  if (code === "Semicolon") return ";";
+  if (code === "Quote") return "'";
+  if (code === "Comma") return ",";
+  if (code === "Period") return ".";
+  if (code === "Slash") return "/";
+  if (code === "Backquote") return "`";
+  return null;
+}
+
+function buildShortcutString(e: KeyboardEvent): string | null {
+  const modifiers: string[] = [];
+  if (e.metaKey) modifiers.push("CommandOrControl");
+  if (e.ctrlKey && !e.metaKey) modifiers.push("Control");
+  if (e.altKey) modifiers.push("Alt");
+  if (e.shiftKey) modifiers.push("Shift");
+
+  if (modifiers.length === 0) return null;
+
+  const key = codeToTauriKey(e.code);
+  if (!key) return null;
+
+  return [...modifiers, key].join("+");
+}
+
 interface SettingsPanelProps {
   currentBreed: Breed;
   currentColor: Color;
   customThemes: SpriteTheme[];
+  shortcut: string;
   onSelectBreed: (breed: Breed) => void;
   onSelectColor: (color: Color) => void;
   onImport: (name: string, idle: string, walk: string, sleep: string) => void;
   onDelete: (id: string) => void;
+  onChangeShortcut: (s: string) => void;
   onClose: () => void;
 }
 
@@ -26,15 +80,19 @@ export default function SettingsPanel({
   currentBreed,
   currentColor,
   customThemes,
+  shortcut,
   onSelectBreed,
   onSelectColor,
   onImport,
   onDelete,
+  onChangeShortcut,
   onClose,
 }: SettingsPanelProps) {
   const idleInputRef = useRef<HTMLInputElement>(null);
   const walkInputRef = useRef<HTMLInputElement>(null);
   const sleepInputRef = useRef<HTMLInputElement>(null);
+  const [recording, setRecording] = useState(false);
+  const recorderInputRef = useRef<HTMLInputElement>(null);
 
   const handleImport = () => {
     const idleFile = idleInputRef.current?.files?.[0];
@@ -137,6 +195,52 @@ export default function SettingsPanel({
             </div>
           </>
         )}
+
+        <div className="shortcut-section">
+          <div className="section-label">Keyboard Shortcut</div>
+          {recording ? (
+            <input
+              ref={recorderInputRef}
+              className="shortcut-recorder recording"
+              value="Press keys..."
+              readOnly
+              onKeyDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (e.key === "Escape") {
+                  setRecording(false);
+                  return;
+                }
+
+                const combo = buildShortcutString(e.nativeEvent);
+                if (combo) {
+                  onChangeShortcut(combo);
+                  setRecording(false);
+                }
+              }}
+              onBlur={() => setRecording(false)}
+            />
+          ) : (
+            <div
+              className="shortcut-recorder"
+              onClick={() => {
+                setRecording(true);
+                setTimeout(() => recorderInputRef.current?.focus(), 50);
+              }}
+            >
+              {formatShortcut(shortcut)}
+            </div>
+          )}
+          {shortcut !== DEFAULT_SHORTCUT && (
+            <button
+              className="shortcut-reset"
+              onClick={() => onChangeShortcut(DEFAULT_SHORTCUT)}
+            >
+              Reset to Default
+            </button>
+          )}
+        </div>
 
         <div className="import-section">
           <div className="import-label">

@@ -143,6 +143,75 @@
   color: #c33;
 }
 
+.shortcut-section {
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+  margin-bottom: 16px;
+}
+
+.shortcut-recorder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 16px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  background: white;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  outline: none;
+  user-select: none;
+  min-height: 20px;
+  text-align: center;
+  caret-color: transparent;
+  box-sizing: border-box;
+}
+
+.shortcut-recorder:hover {
+  border-color: #e8a33c;
+}
+
+.shortcut-recorder:focus {
+  border-color: #e8a33c;
+  box-shadow: 0 0 0 2px rgba(232, 163, 60, 0.3);
+}
+
+.shortcut-recorder.recording {
+  border-color: #e8a33c;
+  background: #fff8f0;
+  color: #888;
+  animation: shortcut-pulse 1s ease-in-out infinite;
+}
+
+.shortcut-reset {
+  margin-top: 8px;
+  padding: 4px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 11px;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shortcut-reset:hover {
+  border-color: #e8a33c;
+  color: #8B5E1C;
+  background: #fff8f0;
+}
+
+@keyframes shortcut-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 .import-section {
   border-top: 1px solid #eee;
   padding-top: 12px;
