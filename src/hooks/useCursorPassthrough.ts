@@ -4,6 +4,8 @@ import { invoke } from "@tauri-apps/api/core";
 interface HitZone {
   x: number;
   y: number;
+  w?: number;
+  h?: number;
 }
 
 interface PassthroughConfig {
@@ -41,12 +43,16 @@ export function useCursorPassthrough({ petX, petY, overlayOpen, extraHitZones }:
               mouse.x <= px + hitSize &&
               mouse.y >= py - hitSize &&
               mouse.y <= py + hitSize;
-            const nearExtra = (configRef.current.extraHitZones || []).some((zone) =>
-              mouse.x >= zone.x - hitSize &&
-              mouse.x <= zone.x + hitSize &&
-              mouse.y >= zone.y - hitSize &&
-              mouse.y <= zone.y + hitSize
-            );
+            const nearExtra = (configRef.current.extraHitZones || []).some((zone) => {
+              const hw = (zone.w ?? hitSize * 2) / 2;
+              const hh = (zone.h ?? hitSize * 2) / 2;
+              return (
+                mouse.x >= zone.x - hw &&
+                mouse.x <= zone.x + hw &&
+                mouse.y >= zone.y - hh &&
+                mouse.y <= zone.y + hh
+              );
+            });
             const near = nearPet || nearExtra;
 
             if (near && ignoring.current) {

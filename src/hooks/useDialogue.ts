@@ -27,6 +27,7 @@ export function useDialogue(
   appName: string,
   windowTitle: string,
   appChanged: boolean,
+  onNoteCreated?: (text: string) => void,
 ): DialogueState {
   const [text, setText] = useState("");
   const [visible, setVisible] = useState(false);
@@ -82,13 +83,21 @@ export function useDialogue(
       setText("...");
 
       try {
-        const response = await invoke<string>("generate_pet_dialogue", {
+        let response = await invoke<string>("generate_pet_dialogue", {
           appName,
           windowTitle,
           trigger,
           mode,
           userInput: userInput ?? "",
         });
+
+        // Check for [NOTE: ...] tags and extract notes
+        const noteMatch = response.match(/\[NOTE:\s*(.+?)\]/);
+        if (noteMatch) {
+          onNoteCreated?.(noteMatch[1].trim());
+          response = response.replace(/\[NOTE:\s*.+?\]/, "").trim();
+        }
+
         // Scale duration by message length: ~80ms per character, clamped to 3-20s
         const duration = Math.min(20000, Math.max(3000, response.length * 80));
         showDialogue(response, duration);
@@ -100,7 +109,7 @@ export function useDialogue(
         busyRef.current = false;
       }
     },
-    [appName, windowTitle, muted, showDialogue],
+    [appName, windowTitle, muted, showDialogue, onNoteCreated],
   );
 
   // Spontaneous dialogue - much less frequent

@@ -10,6 +10,8 @@ import AchievementsPanel from "./components/AchievementsPanel";
 import AchievementToast from "./components/AchievementToast";
 import FriendsPanel from "./components/FriendsPanel";
 import VisitingPet from "./components/VisitingPet";
+import StickyNoteComponent from "./components/StickyNote";
+import NotesPanel from "./components/NotesPanel";
 import { usePetMovement } from "./hooks/usePetMovement";
 import { useActiveWindow } from "./hooks/useActiveWindow";
 import { useDialogue } from "./hooks/useDialogue";
@@ -20,6 +22,7 @@ import { useEventTracker } from "./hooks/useEventTracker";
 import { useAchievements } from "./hooks/useAchievements";
 import { useJournal } from "./hooks/useJournal";
 import { useFriends } from "./hooks/useFriends";
+import { useNotes } from "./hooks/useNotes";
 
 type InputMode = "chat" | "search" | null;
 const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Space";
@@ -31,10 +34,12 @@ export default function App() {
     goHome, leaveHome, nap, wake,
   } = usePetMovement();
   const { appName, windowTitle, appChanged } = useActiveWindow();
+  const { notes, notesVisible, addNote, deleteNote, updateNotePosition, toggleNotesVisible } = useNotes();
   const { text, visible, hiding, loading, generate, dismiss } = useDialogue(
     appName,
     windowTitle,
     appChanged,
+    addNote,
   );
   const { breed, color, currentTheme, customThemes, selectBreed, selectColor, addCustomTheme, removeCustomTheme } =
     useTheme();
@@ -61,16 +66,27 @@ export default function App() {
   const [journalOpen, setJournalOpen] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
   const [visitorPos, setVisitorPos] = useState<{ x: number; y: number } | null>(null);
   const [visitorOverlay, setVisitorOverlay] = useState(false);
+  const [notePositions, setNotePositions] = useState<Map<string, { x: number; y: number }>>(new Map());
 
-  const overlayOpen = menuOpen || inputMode !== null || dragging || settingsOpen || journalOpen || achievementsOpen || friendsOpen || visitorOverlay;
+  const overlayOpen = menuOpen || inputMode !== null || dragging || settingsOpen || journalOpen || achievementsOpen || friendsOpen || notesOpen || visitorOverlay;
+
+  const extraHitZones = [
+    ...(visitorPos ? [visitorPos] : []),
+    ...(notesVisible ? notes.map((n) => {
+      const pos = notePositions.get(n.id);
+      // Center of the note (180px wide, ~80px tall) with generous hit zone
+      return { x: (pos?.x ?? n.x) + 90, y: (pos?.y ?? n.y) + 40, w: 200, h: 100 };
+    }) : []),
+  ];
 
   useCursorPassthrough({
     petX: position.x,
     petY: position.y,
     overlayOpen,
-    extraHitZones: visitorPos ? [visitorPos] : undefined,
+    extraHitZones: extraHitZones.length > 0 ? extraHitZones : undefined,
   });
 
   // Generate pet comment on achievement unlock
@@ -100,6 +116,7 @@ export default function App() {
         setJournalOpen(false);
         setAchievementsOpen(false);
         setFriendsOpen(false);
+        setNotesOpen(false);
         setInputMode("chat");
         trackEvent("menuOpen", "chat");
       }
@@ -125,7 +142,7 @@ export default function App() {
   }, [setDragging, trackEvent]);
 
   const handlePetClick = useCallback(() => {
-    if (settingsOpen || journalOpen || achievementsOpen || friendsOpen) return;
+    if (settingsOpen || journalOpen || achievementsOpen || friendsOpen || notesOpen) return;
     trackEvent("petClick");
     if (state === "napping") {
       wake();
@@ -141,7 +158,7 @@ export default function App() {
     if (visible && !menuOpen) dismiss();
     setMenuOpen((prev) => !prev);
     setInputMode(null);
-  }, [state, wake, leaveHome, generate, dismiss, visible, menuOpen, settingsOpen, journalOpen, achievementsOpen, friendsOpen, trackEvent]);
+  }, [state, wake, leaveHome, generate, dismiss, visible, menuOpen, settingsOpen, journalOpen, achievementsOpen, friendsOpen, notesOpen, trackEvent]);
 
   const handleMenuSelect = useCallback(
     (action: MenuAction) => {
@@ -196,6 +213,10 @@ export default function App() {
         case "friends":
           trackEvent("friends");
           setFriendsOpen(true);
+          break;
+        case "notes":
+          trackEvent("notes");
+          setNotesOpen(true);
           break;
       }
     },
@@ -257,7 +278,7 @@ export default function App() {
         onDragEnd={handleDragEnd}
       />
 
-      {visible && !menuOpen && !inputMode && !settingsOpen && !journalOpen && !achievementsOpen && !friendsOpen && (
+      {visible && !menuOpen && !inputMode && !settingsOpen && !journalOpen && !achievementsOpen && !friendsOpen && !notesOpen && (
         <SpeechBubble
           text={loading ? "..." : text}
           x={position.x}
@@ -340,6 +361,29 @@ export default function App() {
           onClose={() => setFriendsOpen(false)}
         />
       )}
+
+      {notesOpen && (
+        <NotesPanel
+          notes={notes}
+          notesVisible={notesVisible}
+          onAdd={addNote}
+          onDelete={deleteNote}
+          onToggleVisible={toggleNotesVisible}
+          onClose={() => setNotesOpen(false)}
+        />
+      )}
+
+      {notesVisible && notes.length > 0 && !notesOpen && notes.map((note) => (
+        <StickyNoteComponent
+          key={note.id}
+          note={note}
+          onDelete={deleteNote}
+          onMove={updateNotePosition}
+          onPositionReport={(id, x, y) => {
+            setNotePositions((prev) => new Map(prev).set(id, { x, y }));
+          }}
+        />
+      ))}
 
       {currentVisit && !settingsOpen && !journalOpen && !achievementsOpen && !friendsOpen && (
         <VisitingPet
