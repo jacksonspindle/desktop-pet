@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import Pet from "./components/Pet";
 import SpeechBubble from "./components/SpeechBubble";
 import RadialMenu, { MenuAction } from "./components/RadialMenu";
-import ChatInput from "./components/ChatInput";
+import CommandPalette from "./components/CommandPalette";
 import SettingsPanel from "./components/SettingsPanel";
 import JournalPanel from "./components/JournalPanel";
 import AchievementsPanel from "./components/AchievementsPanel";
@@ -23,16 +24,17 @@ import { useAchievements } from "./hooks/useAchievements";
 import { useJournal } from "./hooks/useJournal";
 import { useFriends } from "./hooks/useFriends";
 import { useNotes } from "./hooks/useNotes";
+import { useWindowPerching } from "./hooks/useWindowPerching";
 
-type InputMode = "chat" | "search" | null;
 const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Space";
 
 export default function App() {
+  const { requestPerch, startMonitoring, stopMonitoring, cancelPerch, windowGone } = useWindowPerching();
   const {
     position, state, facingLeft, dragging,
     setState, setPosition, setDragging,
-    goHome, leaveHome, nap, wake,
-  } = usePetMovement();
+    goHome, leaveHome, nap, wake, endPerch, triggerPerch,
+  } = usePetMovement({ perchRequester: requestPerch });
   const { appName, windowTitle, appChanged } = useActiveWindow();
   const { notes, notesVisible, addNote, deleteNote, updateNotePosition, toggleNotesVisible } = useNotes();
   const { text, visible, hiding, loading, generate, dismiss } = useDialogue(
@@ -61,7 +63,7 @@ export default function App() {
   }, []);
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [inputMode, setInputMode] = useState<InputMode>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [journalOpen, setJournalOpen] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
@@ -71,7 +73,7 @@ export default function App() {
   const [visitorOverlay, setVisitorOverlay] = useState(false);
   const [notePositions, setNotePositions] = useState<Map<string, { x: number; y: number }>>(new Map());
 
-  const overlayOpen = menuOpen || inputMode !== null || dragging || settingsOpen || journalOpen || achievementsOpen || friendsOpen || notesOpen || visitorOverlay;
+  const overlayOpen = menuOpen || paletteOpen || dragging || settingsOpen || journalOpen || achievementsOpen || friendsOpen || notesOpen || visitorOverlay;
 
   const extraHitZones = [
     ...(visitorPos ? [visitorPos] : []),
@@ -102,14 +104,37 @@ export default function App() {
     }
   }, [newlyUnlocked, generate]);
 
-  // Global shortcut to toggle chat (user-configurable)
-  const inputModeRef = useRef(inputMode);
-  inputModeRef.current = inputMode;
+  // Perching: start monitoring + auto-end timer
+  useEffect(() => {
+    if (state !== "perching") return;
+    startMonitoring();
+    const duration = 15000 + Math.random() * 30000; // 15-45s
+    const timer = setTimeout(() => {
+      endPerch();
+      stopMonitoring();
+    }, duration);
+    return () => {
+      clearTimeout(timer);
+      stopMonitoring();
+    };
+  }, [state, endPerch, startMonitoring, stopMonitoring]);
+
+  // Perching: hop off if window disappeared/moved
+  useEffect(() => {
+    if (windowGone) {
+      endPerch();
+      cancelPerch();
+    }
+  }, [windowGone, endPerch, cancelPerch]);
+
+  // Global shortcut to toggle command palette (user-configurable)
+  const paletteOpenRef = useRef(paletteOpen);
+  paletteOpenRef.current = paletteOpen;
   useEffect(() => {
     register(shortcut, (e) => {
       if (e.state !== "Pressed") return;
-      if (inputModeRef.current === "chat") {
-        setInputMode(null);
+      if (paletteOpenRef.current) {
+        setPaletteOpen(false);
       } else {
         setMenuOpen(false);
         setSettingsOpen(false);
@@ -117,8 +142,8 @@ export default function App() {
         setAchievementsOpen(false);
         setFriendsOpen(false);
         setNotesOpen(false);
-        setInputMode("chat");
-        trackEvent("menuOpen", "chat");
+        setPaletteOpen(true);
+        trackEvent("menuOpen", "palette");
       }
     });
     return () => { unregister(shortcut); };
@@ -127,10 +152,14 @@ export default function App() {
   const handleDragStart = useCallback(() => {
     setDragging(true);
     setMenuOpen(false);
-    setInputMode(null);
+    setPaletteOpen(false);
     dismiss();
     if (state === "walking") setState("idle");
-  }, [setDragging, dismiss, state, setState]);
+    if (state === "perching") {
+      setState("idle");
+      cancelPerch();
+    }
+  }, [setDragging, dismiss, state, setState, cancelPerch]);
 
   const handleDrag = useCallback((mx: number, my: number) => {
     setPosition({ x: mx, y: my });
@@ -157,7 +186,7 @@ export default function App() {
     }
     if (visible && !menuOpen) dismiss();
     setMenuOpen((prev) => !prev);
-    setInputMode(null);
+    setPaletteOpen(false);
   }, [state, wake, leaveHome, generate, dismiss, visible, menuOpen, settingsOpen, journalOpen, achievementsOpen, friendsOpen, notesOpen, trackEvent]);
 
   const handleMenuSelect = useCallback(
@@ -166,11 +195,11 @@ export default function App() {
       switch (action) {
         case "chat":
           trackEvent("menuOpen", "chat");
-          setInputMode("chat");
+          setPaletteOpen(true);
           break;
         case "search":
           trackEvent("menuOpen", "search");
-          setInputMode("search");
+          setPaletteOpen(true);
           break;
         case "music":
           toggleMusic();
@@ -198,6 +227,11 @@ export default function App() {
           trackEvent("home");
           dismiss();
           break;
+        case "perch":
+          trackEvent("perch");
+          dismiss();
+          triggerPerch();
+          break;
         case "settings":
           trackEvent("settings");
           setSettingsOpen(true);
@@ -220,23 +254,29 @@ export default function App() {
           break;
       }
     },
-    [setState, generate, nap, goHome, dismiss, toggleMusic, musicPlaying, trackEvent, manualUnlock, state],
+    [setState, generate, nap, goHome, dismiss, toggleMusic, musicPlaying, trackEvent, manualUnlock, state, triggerPerch],
   );
 
-  const handleChatSubmit = useCallback(
+  const handlePaletteChat = useCallback(
     (userText: string) => {
-      const mode = inputMode ?? "chat";
-      setInputMode(null);
+      setPaletteOpen(false);
       setState("talking");
-      if (mode === "chat") {
-        trackEvent("chat");
-      } else if (mode === "search") {
-        trackEvent("search", userText);
-      }
-      generate(mode, `user ${mode === "search" ? "searched for" : "said"}: ${userText}`, userText);
+      trackEvent("chat");
+      generate("chat", `user said: ${userText}`, userText);
       setTimeout(() => setState("idle"), 3000);
     },
-    [inputMode, setState, generate, trackEvent],
+    [setState, generate, trackEvent],
+  );
+
+  const handlePaletteSearch = useCallback(
+    (query: string) => {
+      setPaletteOpen(false);
+      setState("talking");
+      trackEvent("search", query);
+      generate("search", `user searched for: ${query}`, query);
+      setTimeout(() => setState("idle"), 3000);
+    },
+    [setState, generate, trackEvent],
   );
 
   const handleVisitorChat = useCallback(
@@ -247,6 +287,10 @@ export default function App() {
     },
     [currentVisit, sendVisit],
   );
+
+  const handleClearMemory = useCallback(() => {
+    invoke("clear_chat_memory");
+  }, []);
 
   const handleThemeImport = useCallback(
     (name: string, idle: string, walk: string, sleep: string) => {
@@ -278,7 +322,7 @@ export default function App() {
         onDragEnd={handleDragEnd}
       />
 
-      {visible && !menuOpen && !inputMode && !settingsOpen && !journalOpen && !achievementsOpen && !friendsOpen && !notesOpen && (
+      {visible && !menuOpen && !paletteOpen && !settingsOpen && !journalOpen && !achievementsOpen && !friendsOpen && !notesOpen && (
         <SpeechBubble
           text={loading ? "..." : text}
           x={position.x}
@@ -297,13 +341,15 @@ export default function App() {
         />
       )}
 
-      {inputMode && (
-        <ChatInput
+      {paletteOpen && (
+        <CommandPalette
           x={position.x}
           y={position.y}
-          mode={inputMode}
-          onSubmit={handleChatSubmit}
-          onClose={() => setInputMode(null)}
+          musicPlaying={musicPlaying}
+          onExecute={handleMenuSelect}
+          onChat={handlePaletteChat}
+          onSearch={handlePaletteSearch}
+          onClose={() => setPaletteOpen(false)}
         />
       )}
 
@@ -318,6 +364,7 @@ export default function App() {
           onImport={handleThemeImport}
           onDelete={removeCustomTheme}
           onChangeShortcut={handleChangeShortcut}
+          onClearMemory={handleClearMemory}
           onClose={() => setSettingsOpen(false)}
         />
       )}

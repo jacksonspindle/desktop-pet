@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::memory;
+
 #[derive(Serialize)]
 struct ClaudeRequest {
     model: String,
@@ -10,7 +12,7 @@ struct ClaudeRequest {
     tools: Option<Vec<serde_json::Value>>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct Message {
     role: String,
     content: String,
@@ -38,7 +40,7 @@ struct ClaudeErrorDetail {
     message: Option<String>,
 }
 
-fn build_system_prompt(mode: &str, app_name: &str, window_title: &str) -> String {
+fn build_system_prompt(mode: &str, app_name: &str, window_title: &str, facts: &[String]) -> String {
     let now = chrono::Local::now();
     let time_of_day = match now.format("%H").to_string().parse::<u32>().unwrap_or(12) {
         0..=5 => "late night",
@@ -59,6 +61,17 @@ fn build_system_prompt(mode: &str, app_name: &str, window_title: &str) -> String
     let no_actions = "Never narrate actions in asterisks like *stretches* or *yawns* or *purrs*. \
                       Just speak naturally as a cat would.";
 
+    let facts_section = if !facts.is_empty() {
+        let items: Vec<String> = facts
+            .iter()
+            .enumerate()
+            .map(|(i, f)| format!("{}) {}", i + 1, f))
+            .collect();
+        format!(" Things you remember about your owner: {}", items.join(". "))
+    } else {
+        String::new()
+    };
+
     match mode {
         "chat" => format!(
             "You are a cute cat desktop pet living on the user's screen. \
@@ -70,8 +83,13 @@ fn build_system_prompt(mode: &str, app_name: &str, window_title: &str) -> String
             followed by a short confirmation. For example if they say \
             'remind me to call the dentist', respond like \
             'Got it, I will stick that up for you! [NOTE: Call the dentist]'. \
+            If the user tells you something personal or worth remembering \
+            (their name, preferences, important events), include \
+            [REMEMBER: key fact] in your response. For example if they say \
+            'My name is Jackson', respond like \
+            'Nice to meet you, Jackson! [REMEMBER: Owner's name is Jackson]'.{} \
             Context: {}",
-            no_actions, context
+            no_actions, facts_section, context
         ),
         "judge" => format!(
             "You are a judgmental cat desktop pet. Roast and judge what the user is currently doing \
@@ -128,8 +146,21 @@ fn build_user_message(mode: &str, trigger: &str, user_input: &str) -> String {
     }
 }
 
+/// Extract all [REMEMBER: ...] tags from text, returning (cleaned_text, facts)
+fn extract_remember_tags(text: &str) -> (String, Vec<String>) {
+    let mut facts = Vec::new();
+    let re = regex::Regex::new(r"\[REMEMBER:\s*(.+?)\]").unwrap();
+    for cap in re.captures_iter(text) {
+        facts.push(cap[1].trim().to_string());
+    }
+    let cleaned = re.replace_all(text, "").to_string();
+    let cleaned = cleaned.trim().to_string();
+    (cleaned, facts)
+}
+
 #[tauri::command]
 pub async fn generate_pet_dialogue(
+    app: tauri::AppHandle,
     app_name: String,
     window_title: String,
     trigger: String,
@@ -142,7 +173,21 @@ pub async fn generate_pet_dialogue(
     let mode = mode.unwrap_or_else(|| "spontaneous".to_string());
     let user_input = user_input.unwrap_or_default();
 
-    let system_prompt = build_system_prompt(&mode, &app_name, &window_title);
+    let is_chat = mode == "chat";
+
+    // Load memory for chat mode
+    let chat_memory = if is_chat {
+        Some(memory::load_memory(&app))
+    } else {
+        None
+    };
+
+    let facts = chat_memory
+        .as_ref()
+        .map(|m| m.facts.as_slice())
+        .unwrap_or(&[]);
+
+    let system_prompt = build_system_prompt(&mode, &app_name, &window_title, facts);
     let user_message = build_user_message(&mode, &trigger, &user_input);
 
     let max_tokens = match mode.as_str() {
@@ -163,14 +208,26 @@ pub async fn generate_pet_dialogue(
         None
     };
 
+    // Build messages array: include history for chat mode
+    let mut messages: Vec<Message> = Vec::new();
+    if let Some(ref mem) = chat_memory {
+        for msg in &mem.messages {
+            messages.push(Message {
+                role: msg.role.clone(),
+                content: msg.content.clone(),
+            });
+        }
+    }
+    messages.push(Message {
+        role: "user".to_string(),
+        content: user_message.clone(),
+    });
+
     let request = ClaudeRequest {
         model: "claude-haiku-4-5-20251001".to_string(),
         max_tokens,
         system: system_prompt,
-        messages: vec![Message {
-            role: "user".to_string(),
-            content: user_message,
-        }],
+        messages,
         tools,
     };
 
@@ -222,8 +279,20 @@ pub async fn generate_pet_dialogue(
 
     let answer = answer.trim().trim_start_matches(['.', ',', ';', ':']).trim().to_string();
     if answer.is_empty() {
-        Err("Empty response from Claude".to_string())
-    } else {
-        Ok(answer)
+        return Err("Empty response from Claude".to_string());
     }
+
+    // For chat mode: extract [REMEMBER:] tags and save to memory
+    if is_chat {
+        let (cleaned, new_facts) = extract_remember_tags(&answer);
+        let mut mem = chat_memory.unwrap_or_default();
+        for fact in &new_facts {
+            memory::add_fact(&mut mem, fact);
+        }
+        memory::add_exchange(&mut mem, &user_input, &cleaned);
+        memory::save_memory(&app, &mem);
+        return Ok(cleaned);
+    }
+
+    Ok(answer)
 }

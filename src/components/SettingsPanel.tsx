@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import {
   SpriteTheme,
   Breed,
@@ -73,6 +74,7 @@ interface SettingsPanelProps {
   onImport: (name: string, idle: string, walk: string, sleep: string) => void;
   onDelete: (id: string) => void;
   onChangeShortcut: (s: string) => void;
+  onClearMemory: () => void;
   onClose: () => void;
 }
 
@@ -86,6 +88,7 @@ export default function SettingsPanel({
   onImport,
   onDelete,
   onChangeShortcut,
+  onClearMemory,
   onClose,
 }: SettingsPanelProps) {
   const idleInputRef = useRef<HTMLInputElement>(null);
@@ -93,6 +96,12 @@ export default function SettingsPanel({
   const sleepInputRef = useRef<HTMLInputElement>(null);
   const [recording, setRecording] = useState(false);
   const recorderInputRef = useRef<HTMLInputElement>(null);
+  const [memoryStats, setMemoryStats] = useState({ messageCount: 0, factCount: 0 });
+  const [confirmingClear, setConfirmingClear] = useState(false);
+
+  useEffect(() => {
+    invoke<{ messageCount: number; factCount: number }>("get_memory_stats").then(setMemoryStats);
+  }, []);
 
   const handleImport = () => {
     const idleFile = idleInputRef.current?.files?.[0];
@@ -238,6 +247,44 @@ export default function SettingsPanel({
               onClick={() => onChangeShortcut(DEFAULT_SHORTCUT)}
             >
               Reset to Default
+            </button>
+          )}
+        </div>
+
+        <div className="memory-section">
+          <div className="section-label">Memory</div>
+          <div className="memory-stats">
+            <span>{memoryStats.messageCount} conversation{memoryStats.messageCount !== 1 ? "s" : ""}</span>
+            <span className="memory-dot">&middot;</span>
+            <span>{memoryStats.factCount} remembered fact{memoryStats.factCount !== 1 ? "s" : ""}</span>
+          </div>
+          {confirmingClear ? (
+            <div className="memory-confirm">
+              <span className="memory-confirm-text">Clear all memory?</span>
+              <button
+                className="memory-confirm-yes"
+                onClick={() => {
+                  onClearMemory();
+                  setMemoryStats({ messageCount: 0, factCount: 0 });
+                  setConfirmingClear(false);
+                }}
+              >
+                Yes, clear
+              </button>
+              <button
+                className="memory-confirm-no"
+                onClick={() => setConfirmingClear(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              className="memory-clear-btn"
+              onClick={() => setConfirmingClear(true)}
+              disabled={memoryStats.messageCount === 0 && memoryStats.factCount === 0}
+            >
+              Clear Memory
             </button>
           )}
         </div>

@@ -1,5 +1,6 @@
 mod active_window;
 mod dialogue;
+mod memory;
 
 use tauri::{
     menu::{Menu, MenuItem},
@@ -60,7 +61,10 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             active_window::get_active_window_info,
+            active_window::get_visible_windows,
             dialogue::generate_pet_dialogue,
+            memory::clear_chat_memory,
+            memory::get_memory_stats,
             set_ignore_cursor_events,
             get_mouse_position,
         ])

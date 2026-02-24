@@ -52,34 +52,38 @@
   color: #8B5E1C;
 }
 
-.chat-input-container {
+.command-palette-container {
   position: absolute;
   pointer-events: auto;
   z-index: 1003;
   animation: menu-pop 0.2s ease-out;
 }
 
-.chat-input-box {
+.command-palette-box {
   background: white;
   border: 2px solid #555;
   border-radius: 16px;
-  padding: 8px 12px;
+  box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.2);
+  min-width: 300px;
+  overflow: hidden;
+}
+
+.command-palette-input-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.2);
-  min-width: 240px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
 }
 
-.chat-input-label {
-  font-size: 11px;
+.command-palette-prompt {
+  font-size: 13px;
   font-family: 'Helvetica Neue', sans-serif;
-  font-weight: 600;
-  color: #8B5E1C;
-  white-space: nowrap;
+  font-weight: 700;
+  color: #e8a33c;
 }
 
-.chat-input-box input {
+.command-palette-input-row input {
   border: none;
   outline: none;
   font-size: 13px;
@@ -89,8 +93,63 @@
   background: transparent;
 }
 
-.chat-input-box input::placeholder {
+.command-palette-input-row input::placeholder {
   color: #bbb;
+}
+
+.command-palette-results {
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.command-palette-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.1s ease;
+}
+
+.command-palette-item.selected {
+  border-left-color: #e8a33c;
+  background: #fff8f0;
+}
+
+.command-palette-item:hover {
+  background: #fff8f0;
+}
+
+.command-palette-item-icon {
+  font-size: 16px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.command-palette-item-label {
+  font-size: 13px;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+
+.command-palette-item-hint {
+  font-size: 11px;
+  font-family: 'Helvetica Neue', sans-serif;
+  color: #999;
+  white-space: nowrap;
+}
+
+.command-palette-fallback {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-family: 'Helvetica Neue', sans-serif;
+  color: #999;
+  text-align: center;
 }
 
 @keyframes menu-pop {
