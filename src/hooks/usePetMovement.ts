@@ -1,14 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-export type PetState = "idle" | "walking" | "talking" | "napping" | "home" | "perching";
+export type PetState = "idle" | "walking" | "talking" | "napping" | "home";
 
 interface Position {
   x: number;
   y: number;
-}
-
-interface PetMovementOptions {
-  perchRequester?: () => Promise<{ x: number; y: number } | null>;
 }
 
 interface PetMovement {
@@ -23,8 +19,6 @@ interface PetMovement {
   leaveHome: () => void;
   nap: () => void;
   wake: () => void;
-  endPerch: () => void;
-  triggerPerch: () => Promise<boolean>;
 }
 
 function clampPosition(pos: Position): Position {
@@ -40,13 +34,7 @@ const HOME_POSITION = () => ({
   y: 60,
 });
 
-function resolveArrivalState(prevState: PetState): PetState {
-  if (prevState === "home") return "home";
-  if (prevState === "perching") return "perching";
-  return "idle";
-}
-
-export function usePetMovement(options?: PetMovementOptions): PetMovement {
+export function usePetMovement(): PetMovement {
   const [position, setPositionRaw] = useState<Position>(() => {
     const saved = localStorage.getItem("pet-position");
     if (saved) {
@@ -71,10 +59,6 @@ export function usePetMovement(options?: PetMovementOptions): PetMovement {
   const stateRef = useRef<PetState>(state);
   stateRef.current = state;
 
-  // Keep perchRequester in a ref so the walk scheduler always has the latest
-  const perchRequesterRef = useRef(options?.perchRequester);
-  perchRequesterRef.current = options?.perchRequester;
-
   const setState = useCallback((newState: PetState) => {
     setStateInternal(newState);
   }, []);
@@ -92,7 +76,7 @@ export function usePetMovement(options?: PetMovementOptions): PetMovement {
   useEffect(() => {
     if (state !== "walking") return;
     if (!targetRef.current) {
-      setStateInternal(resolveArrivalState(prevStateRef.current));
+      setStateInternal(prevStateRef.current === "home" ? "home" : "idle");
       return;
     }
 
@@ -103,7 +87,7 @@ export function usePetMovement(options?: PetMovementOptions): PetMovement {
       if (cancelled) return;
       const target = targetRef.current;
       if (!target) {
-        setStateInternal(resolveArrivalState(prevStateRef.current));
+        setStateInternal(prevStateRef.current === "home" ? "home" : "idle");
         return;
       }
 
@@ -114,9 +98,8 @@ export function usePetMovement(options?: PetMovementOptions): PetMovement {
 
         if (dist < speed) {
           targetRef.current = null;
-          setStateInternal(resolveArrivalState(prevStateRef.current));
-          // Skip clamp for perch targets (window tops can be near screen edges)
-          return prevStateRef.current === "perching" ? target : clampPosition(target);
+          setStateInternal(prevStateRef.current === "home" ? "home" : "idle");
+          return clampPosition(target);
         }
 
         return {
@@ -166,59 +149,14 @@ export function usePetMovement(options?: PetMovementOptions): PetMovement {
     setStateInternal("idle");
   }, []);
 
-  const endPerch = useCallback(() => {
-    if (stateRef.current === "perching") {
-      prevStateRef.current = "idle";
-      setStateInternal("idle");
-    }
-  }, []);
-
-  const triggerPerch = useCallback(async (): Promise<boolean> => {
-    if (!perchRequesterRef.current) return false;
-    try {
-      const target = await perchRequesterRef.current();
-      if (!target) return false;
-      targetRef.current = target;
-      prevStateRef.current = "perching";
-      setPositionRaw((prev) => {
-        setFacingLeft(target.x < prev.x);
-        return prev;
-      });
-      setStateInternal("walking");
-      return true;
-    } catch {
-      return false;
-    }
-  }, []);
-
   // Random walk scheduler
   useEffect(() => {
     const scheduleWalk = () => {
       const delay = 30000 + Math.random() * 60000;
-      walkTimeoutRef.current = setTimeout(async () => {
+      walkTimeoutRef.current = setTimeout(() => {
         if (stateRef.current !== "idle") {
           scheduleWalk();
           return;
-        }
-
-        // 35% chance to try perching on a window
-        if (perchRequesterRef.current && Math.random() < 0.35) {
-          try {
-            const perchTarget = await perchRequesterRef.current();
-            if (perchTarget) {
-              targetRef.current = perchTarget;
-              prevStateRef.current = "perching";
-              setPositionRaw((prev) => {
-                setFacingLeft(perchTarget.x < prev.x);
-                return prev;
-              });
-              setStateInternal("walking");
-              scheduleWalk();
-              return;
-            }
-          } catch {
-            // fall through to normal walk
-          }
         }
 
         const margin = 80;
@@ -251,6 +189,6 @@ export function usePetMovement(options?: PetMovementOptions): PetMovement {
   return {
     position, state, facingLeft, dragging,
     setState, setPosition, setDragging,
-    goHome, leaveHome, nap, wake, endPerch, triggerPerch,
+    goHome, leaveHome, nap, wake,
   };
 }

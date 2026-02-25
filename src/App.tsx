@@ -24,17 +24,15 @@ import { useAchievements } from "./hooks/useAchievements";
 import { useJournal } from "./hooks/useJournal";
 import { useFriends } from "./hooks/useFriends";
 import { useNotes } from "./hooks/useNotes";
-import { useWindowPerching } from "./hooks/useWindowPerching";
 
 const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Space";
 
 export default function App() {
-  const { requestPerch, startMonitoring, stopMonitoring, cancelPerch, windowGone } = useWindowPerching();
   const {
     position, state, facingLeft, dragging,
     setState, setPosition, setDragging,
-    goHome, leaveHome, nap, wake, endPerch, triggerPerch,
-  } = usePetMovement({ perchRequester: requestPerch });
+    goHome, leaveHome, nap, wake,
+  } = usePetMovement();
   const { appName, windowTitle, appChanged } = useActiveWindow();
   const { notes, notesVisible, addNote, deleteNote, updateNotePosition, toggleNotesVisible } = useNotes();
   const { text, visible, hiding, loading, generate, dismiss } = useDialogue(
@@ -104,29 +102,6 @@ export default function App() {
     }
   }, [newlyUnlocked, generate]);
 
-  // Perching: start monitoring + auto-end timer
-  useEffect(() => {
-    if (state !== "perching") return;
-    startMonitoring();
-    const duration = 15000 + Math.random() * 30000; // 15-45s
-    const timer = setTimeout(() => {
-      endPerch();
-      stopMonitoring();
-    }, duration);
-    return () => {
-      clearTimeout(timer);
-      stopMonitoring();
-    };
-  }, [state, endPerch, startMonitoring, stopMonitoring]);
-
-  // Perching: hop off if window disappeared/moved
-  useEffect(() => {
-    if (windowGone) {
-      endPerch();
-      cancelPerch();
-    }
-  }, [windowGone, endPerch, cancelPerch]);
-
   // Global shortcut to toggle command palette (user-configurable)
   const paletteOpenRef = useRef(paletteOpen);
   paletteOpenRef.current = paletteOpen;
@@ -155,11 +130,7 @@ export default function App() {
     setPaletteOpen(false);
     dismiss();
     if (state === "walking") setState("idle");
-    if (state === "perching") {
-      setState("idle");
-      cancelPerch();
-    }
-  }, [setDragging, dismiss, state, setState, cancelPerch]);
+  }, [setDragging, dismiss, state, setState]);
 
   const handleDrag = useCallback((mx: number, my: number) => {
     setPosition({ x: mx, y: my });
@@ -227,11 +198,6 @@ export default function App() {
           trackEvent("home");
           dismiss();
           break;
-        case "perch":
-          trackEvent("perch");
-          dismiss();
-          triggerPerch();
-          break;
         case "settings":
           trackEvent("settings");
           setSettingsOpen(true);
@@ -254,7 +220,7 @@ export default function App() {
           break;
       }
     },
-    [setState, generate, nap, goHome, dismiss, toggleMusic, musicPlaying, trackEvent, manualUnlock, state, triggerPerch],
+    [setState, generate, nap, goHome, dismiss, toggleMusic, musicPlaying, trackEvent, manualUnlock, state],
   );
 
   const handlePaletteChat = useCallback(

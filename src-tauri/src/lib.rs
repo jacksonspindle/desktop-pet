@@ -61,7 +61,6 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             active_window::get_active_window_info,
-            active_window::get_visible_windows,
             dialogue::generate_pet_dialogue,
             memory::clear_chat_memory,
             memory::get_memory_stats,
