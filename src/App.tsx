@@ -13,6 +13,10 @@ import FriendsPanel from "./components/FriendsPanel";
 import VisitingPet from "./components/VisitingPet";
 import StickyNoteComponent from "./components/StickyNote";
 import NotesPanel from "./components/NotesPanel";
+import SnackPanel, { Snack } from "./components/SnackPanel";
+import FeedAnimation from "./components/FeedAnimation";
+import TimerPanel from "./components/TimerPanel";
+import TimerBubble from "./components/TimerBubble";
 import { usePetMovement } from "./hooks/usePetMovement";
 import { useActiveWindow } from "./hooks/useActiveWindow";
 import { useDialogue } from "./hooks/useDialogue";
@@ -24,6 +28,7 @@ import { useAchievements } from "./hooks/useAchievements";
 import { useJournal } from "./hooks/useJournal";
 import { useFriends } from "./hooks/useFriends";
 import { useNotes } from "./hooks/useNotes";
+import { useTimer } from "./hooks/useTimer";
 
 const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Space";
 
@@ -35,6 +40,12 @@ export default function App() {
   } = usePetMovement();
   const { appName, windowTitle, appChanged } = useActiveWindow();
   const { notes, notesVisible, addNote, deleteNote, updateNotePosition, toggleNotesVisible } = useNotes();
+  const timer = useTimer({
+    onComplete: (timerLabel) => {
+      trackEvent("timer", timerLabel);
+      generate("chat", `timer finished: ${timerLabel}`);
+    },
+  });
   const { text, visible, hiding, loading, generate, dismiss } = useDialogue(
     appName,
     windowTitle,
@@ -67,11 +78,31 @@ export default function App() {
   const [achievementsOpen, setAchievementsOpen] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [timerOpen, setTimerOpen] = useState(false);
+  const [feedOpen, setFeedOpen] = useState(false);
+  const [feedingSnack, setFeedingSnack] = useState<{ snack: Snack; startX: number; startY: number; skipFly?: boolean } | null>(null);
+  const [draggingSnack, setDraggingSnack] = useState<{ snack: Snack; x: number; y: number } | null>(null);
+  const [petExtraStyle, setPetExtraStyle] = useState<React.CSSProperties>({});
   const [visitorPos, setVisitorPos] = useState<{ x: number; y: number } | null>(null);
   const [visitorOverlay, setVisitorOverlay] = useState(false);
   const [notePositions, setNotePositions] = useState<Map<string, { x: number; y: number }>>(new Map());
 
-  const overlayOpen = menuOpen || paletteOpen || dragging || settingsOpen || journalOpen || achievementsOpen || friendsOpen || notesOpen || visitorOverlay;
+  const positionRef = useRef(position);
+  positionRef.current = position;
+
+  // Pulse pet when dragging snack is near
+  const nearPet = draggingSnack
+    ? Math.hypot(draggingSnack.x - position.x, draggingSnack.y - position.y) < 60
+    : false;
+  useEffect(() => {
+    if (nearPet) {
+      setPetExtraStyle({ animation: "feed-drag-pulse 0.8s ease-in-out infinite", transition: "none" });
+    } else if (draggingSnack) {
+      setPetExtraStyle({});
+    }
+  }, [nearPet, draggingSnack]);
+
+  const overlayOpen = menuOpen || paletteOpen || dragging || settingsOpen || journalOpen || achievementsOpen || friendsOpen || notesOpen || timerOpen || feedOpen || !!draggingSnack || visitorOverlay;
 
   const extraHitZones = [
     ...(visitorPos ? [visitorPos] : []),
@@ -80,6 +111,7 @@ export default function App() {
       // Center of the note (180px wide, ~80px tall) with generous hit zone
       return { x: (pos?.x ?? n.x) + 90, y: (pos?.y ?? n.y) + 40, w: 200, h: 100 };
     }) : []),
+    ...(timer.running ? [{ x: position.x - 50, y: position.y - 60, w: 80, h: 30 }] : []),
   ];
 
   useCursorPassthrough({
@@ -117,6 +149,8 @@ export default function App() {
         setAchievementsOpen(false);
         setFriendsOpen(false);
         setNotesOpen(false);
+        setTimerOpen(false);
+        setFeedOpen(false);
         setPaletteOpen(true);
         trackEvent("menuOpen", "palette");
       }
@@ -142,7 +176,7 @@ export default function App() {
   }, [setDragging, trackEvent]);
 
   const handlePetClick = useCallback(() => {
-    if (settingsOpen || journalOpen || achievementsOpen || friendsOpen || notesOpen) return;
+    if (settingsOpen || journalOpen || achievementsOpen || friendsOpen || notesOpen || timerOpen || feedOpen) return;
     trackEvent("petClick");
     if (state === "napping") {
       wake();
@@ -158,7 +192,7 @@ export default function App() {
     if (visible && !menuOpen) dismiss();
     setMenuOpen((prev) => !prev);
     setPaletteOpen(false);
-  }, [state, wake, leaveHome, generate, dismiss, visible, menuOpen, settingsOpen, journalOpen, achievementsOpen, friendsOpen, notesOpen, trackEvent]);
+  }, [state, wake, leaveHome, generate, dismiss, visible, menuOpen, settingsOpen, journalOpen, achievementsOpen, friendsOpen, notesOpen, timerOpen, feedOpen, trackEvent]);
 
   const handleMenuSelect = useCallback(
     (action: MenuAction) => {
@@ -218,6 +252,14 @@ export default function App() {
           trackEvent("notes");
           setNotesOpen(true);
           break;
+        case "feed":
+          trackEvent("feed");
+          setFeedOpen(true);
+          break;
+        case "timer":
+          trackEvent("timer");
+          setTimerOpen(true);
+          break;
       }
     },
     [setState, generate, nap, goHome, dismiss, toggleMusic, musicPlaying, trackEvent, manualUnlock, state],
@@ -258,6 +300,70 @@ export default function App() {
     invoke("clear_chat_memory");
   }, []);
 
+  const handleSnackGrab = useCallback(
+    (snack: Snack, e: React.MouseEvent) => {
+      const startX = e.clientX;
+      const startY = e.clientY;
+      let isDragging = false;
+
+      const onMouseMove = (me: MouseEvent) => {
+        const dx = me.clientX - startX;
+        const dy = me.clientY - startY;
+
+        if (!isDragging && dx * dx + dy * dy > 25) {
+          // Crossed 5px threshold — start drag
+          isDragging = true;
+          setFeedOpen(false);
+          setDraggingSnack({ snack, x: me.clientX, y: me.clientY });
+        }
+
+        if (isDragging) {
+          setDraggingSnack({ snack, x: me.clientX, y: me.clientY });
+        }
+      };
+
+      const onMouseUp = (me: MouseEvent) => {
+        window.removeEventListener("mousemove", onMouseMove);
+        window.removeEventListener("mouseup", onMouseUp);
+
+        if (isDragging) {
+          setDraggingSnack(null);
+          // Check if dropped near pet
+          const pet = positionRef.current;
+          const dist = Math.hypot(me.clientX - pet.x, me.clientY - pet.y);
+          if (dist < 60) {
+            // Drop on pet — skip fly, go straight to chomp
+            setFeedingSnack({ snack, startX: me.clientX, startY: me.clientY, skipFly: true });
+            trackEvent("feed", snack.id);
+            setState("talking");
+          }
+          // else: dropped away, do nothing (emoji fades via CSS)
+          setPetExtraStyle({});
+        } else {
+          // Click without dragging — fallback to old fly animation
+          setFeedOpen(false);
+          setFeedingSnack({ snack, startX, startY });
+          trackEvent("feed", snack.id);
+          setState("talking");
+        }
+      };
+
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", onMouseUp);
+    },
+    [trackEvent, setState],
+  );
+
+  const handleFeedComplete = useCallback(
+    (snackName: string) => {
+      setFeedingSnack(null);
+      setPetExtraStyle({});
+      generate("feed", `cat was fed ${snackName}`);
+      setTimeout(() => setState("idle"), 3000);
+    },
+    [generate, setState],
+  );
+
   const handleThemeImport = useCallback(
     (name: string, idle: string, walk: string, sleep: string) => {
       addCustomTheme(name, idle, walk, sleep);
@@ -282,13 +388,14 @@ export default function App() {
         state={state}
         facingLeft={facingLeft}
         theme={currentTheme}
+        extraStyle={petExtraStyle}
         onClick={handlePetClick}
         onDragStart={handleDragStart}
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}
       />
 
-      {visible && !menuOpen && !paletteOpen && !settingsOpen && !journalOpen && !achievementsOpen && !friendsOpen && !notesOpen && (
+      {visible && !menuOpen && !paletteOpen && !settingsOpen && !journalOpen && !achievementsOpen && !friendsOpen && !notesOpen && !timerOpen && !feedOpen && !feedingSnack && !draggingSnack && (
         <SpeechBubble
           text={loading ? "..." : text}
           x={position.x}
@@ -315,6 +422,11 @@ export default function App() {
           onExecute={handleMenuSelect}
           onChat={handlePaletteChat}
           onSearch={handlePaletteSearch}
+          onTimer={(seconds) => {
+            setPaletteOpen(false);
+            timer.start(seconds);
+            trackEvent("timer", `${Math.round(seconds / 60)}m`);
+          }}
           onClose={() => setPaletteOpen(false)}
         />
       )}
@@ -383,6 +495,58 @@ export default function App() {
           onDelete={deleteNote}
           onToggleVisible={toggleNotesVisible}
           onClose={() => setNotesOpen(false)}
+        />
+      )}
+
+      {feedOpen && (
+        <SnackPanel
+          onGrab={handleSnackGrab}
+          onClose={() => setFeedOpen(false)}
+        />
+      )}
+
+      {draggingSnack && (
+        <div
+          className="feed-dragging-snack"
+          style={{ left: draggingSnack.x, top: draggingSnack.y }}
+        >
+          {draggingSnack.snack.emoji}
+        </div>
+      )}
+
+      {feedingSnack && (
+        <FeedAnimation
+          snack={feedingSnack.snack}
+          startX={feedingSnack.startX}
+          startY={feedingSnack.startY}
+          petX={position.x}
+          petY={position.y}
+          skipFly={feedingSnack.skipFly}
+          onPetStyle={setPetExtraStyle}
+          onComplete={handleFeedComplete}
+        />
+      )}
+
+      {timerOpen && (
+        <TimerPanel
+          running={timer.running}
+          remaining={timer.remaining}
+          label={timer.label}
+          onStart={(seconds, label) => {
+            timer.start(seconds, label);
+            trackEvent("timer", label || `${Math.round(seconds / 60)}m`);
+          }}
+          onCancel={timer.cancel}
+          onClose={() => setTimerOpen(false)}
+        />
+      )}
+
+      {timer.running && !overlayOpen && (
+        <TimerBubble
+          x={position.x}
+          y={position.y}
+          remaining={timer.remaining}
+          label={timer.label}
         />
       )}
 

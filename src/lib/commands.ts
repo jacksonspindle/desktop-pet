@@ -20,4 +20,6 @@ export const commands: Command[] = [
   { id: "achievements", label: "Achievements", icon: "🏆", keywords: ["trophies", "badges", "awards", "unlocks"] },
   { id: "friends", label: "Friends", icon: "👋", keywords: ["social", "visit", "hangout", "pets"] },
   { id: "notes", label: "Notes", icon: "📝", keywords: ["sticky", "memo", "write", "reminder"] },
+  { id: "feed", label: "Feed", icon: "🍣", keywords: ["eat", "food", "snack", "hungry", "treat", "nom"] },
+  { id: "timer", label: "Timer", icon: "⏱️", keywords: ["countdown", "pomodoro", "alarm", "clock", "time"], hint: "timer <minutes>", takesArgument: true },
 ];

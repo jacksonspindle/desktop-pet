@@ -11,11 +11,12 @@ interface CommandPaletteProps {
   onExecute: (action: MenuAction) => void;
   onChat: (text: string) => void;
   onSearch: (query: string) => void;
+  onTimer?: (seconds: number) => void;
   onClose: () => void;
 }
 
 export default function CommandPalette({
-  x, y, musicPlaying, onExecute, onChat, onSearch, onClose,
+  x, y, musicPlaying, onExecute, onChat, onSearch, onTimer, onClose,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -87,6 +88,11 @@ export default function CommandPalette({
       if (arg) {
         if (cmd.id === "chat") onChat(arg);
         else if (cmd.id === "search") onSearch(arg);
+        else if (cmd.id === "timer") {
+          const mins = parseFloat(arg);
+          if (mins > 0 && onTimer) onTimer(Math.round(mins * 60));
+          else onExecute(cmd.id as MenuAction);
+        }
         return;
       }
     }

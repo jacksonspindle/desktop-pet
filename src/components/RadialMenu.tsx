@@ -1,6 +1,6 @@
 import "../styles/menu.css";
 
-export type MenuAction = "chat" | "search" | "music" | "nap" | "home" | "settings" | "journal" | "achievements" | "friends" | "notes";
+export type MenuAction = "chat" | "search" | "music" | "nap" | "home" | "settings" | "journal" | "achievements" | "friends" | "notes" | "feed" | "timer";
 
 interface MenuItem {
   action: MenuAction;
@@ -27,6 +27,8 @@ const MENU_ITEMS: MenuItem[] = [
   { action: "achievements", icon: "\uD83C\uDFC6", label: "Trophies" },
   { action: "friends", icon: "\uD83D\uDC3E", label: "Friends" },
   { action: "notes", icon: "\uD83D\uDCDD", label: "Notes" },
+  { action: "feed", icon: "\uD83C\uDF63", label: "Feed" },
+  { action: "timer", icon: "\u23F1\uFE0F", label: "Timer" },
 ];
 
 const BUTTON_SIZE = 56;

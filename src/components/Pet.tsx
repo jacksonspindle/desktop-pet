@@ -9,6 +9,7 @@ interface PetProps {
   state: PetState;
   facingLeft: boolean;
   theme: SpriteTheme;
+  extraStyle?: React.CSSProperties;
   onClick: () => void;
   onDragStart: () => void;
   onDrag: (x: number, y: number) => void;
@@ -40,7 +41,7 @@ function getAnimClass(state: PetState): string {
 }
 
 export default function Pet({
-  x, y, state, facingLeft, theme,
+  x, y, state, facingLeft, theme, extraStyle,
   onClick, onDragStart, onDrag, onDragEnd,
 }: PetProps) {
   const animClass = getAnimClass(state);
@@ -85,7 +86,7 @@ export default function Pet({
   return (
     <div
       className={`pet-container ${isDragging.current ? "dragging" : ""}`}
-      style={{ left: x - 32, top: y - 32 }}
+      style={{ left: x - 32, top: y - 32, ...extraStyle }}
       onMouseDown={handleMouseDown}
     >
       <div

@@ -1,0 +1,215 @@
+/* Timer panel overlay */
+.timer-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.3);
+  animation: timer-fade-in 0.2s ease-out;
+}
+
+.timer-panel {
+  background: #faf8f5;
+  border-radius: 16px;
+  padding: 24px;
+  width: 420px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  border: 2px solid #ddd;
+}
+
+.timer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.timer-title {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 18px;
+  color: #333;
+  font-weight: bold;
+}
+
+.timer-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  transition: all 0.15s ease;
+}
+
+.timer-close:hover {
+  border-color: #e8a33c;
+  color: #333;
+  background: #fff3e0;
+}
+
+/* Preset grid */
+.timer-presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.timer-preset-btn {
+  padding: 12px 8px;
+  background: white;
+  border: 2px solid #e8a33c;
+  border-radius: 10px;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 14px;
+  color: #4a3b2a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.timer-preset-btn:hover {
+  background: #fff3e0;
+  border-color: #d4922e;
+  transform: scale(1.03);
+}
+
+.timer-preset-btn:active {
+  transform: scale(0.97);
+}
+
+/* Custom input row */
+.timer-custom-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.timer-custom-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.timer-custom-input:focus {
+  border-color: #e8a33c;
+}
+
+.timer-start-btn {
+  padding: 8px 16px;
+  background: #e8a33c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.timer-start-btn:hover {
+  background: #d4922e;
+}
+
+/* Running state */
+.timer-countdown {
+  text-align: center;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 48px;
+  color: #333;
+  padding: 24px 0;
+  letter-spacing: 2px;
+}
+
+.timer-running-label {
+  text-align: center;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 16px;
+}
+
+.timer-cancel-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: white;
+  border: 2px solid #d44;
+  border-radius: 8px;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 13px;
+  color: #d44;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.timer-cancel-btn:hover {
+  background: #fee;
+  border-color: #c33;
+}
+
+/* Timer bubble (floating near pet) */
+.timer-bubble {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1400;
+  background: #fff8e1;
+  border: 2px solid #e8a33c;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 13px;
+  color: #4a3b2a;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transform: translateX(-50%);
+  animation: timer-bubble-in 0.2s ease-out;
+}
+
+.timer-bubble-time {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.timer-bubble.pulsing {
+  animation: timer-pulse 1s ease-in-out infinite;
+}
+
+@keyframes timer-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes timer-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes timer-pulse {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+    border-color: #e8a33c;
+  }
+  50% {
+    transform: translateX(-50%) scale(1.08);
+    border-color: #d44;
+  }
+}

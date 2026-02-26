@@ -26,6 +26,8 @@ export interface EventData {
   dailyChats: number;
   lastInteractionDate: string;
   lastInteractionTime: number;
+  feeds: number;
+  feedsBySnack: Record<string, number>;
 }
 
 const STORAGE_KEY = "pet-events";
@@ -79,6 +81,8 @@ function defaultData(): EventData {
     dailyChats: 0,
     lastInteractionDate: "",
     lastInteractionTime: 0,
+    feeds: 0,
+    feedsBySnack: {},
   };
 }
 
@@ -86,11 +90,9 @@ function loadData(): EventData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw) as EventData;
-      // Reset session-specific fields
-      parsed.sessionStart = Date.now();
-      parsed.sessionChats = 0;
-      return parsed;
+      const parsed = JSON.parse(raw);
+      // Merge with defaults so new fields are always present
+      return { ...defaultData(), ...parsed, sessionStart: Date.now(), sessionChats: 0 };
     }
   } catch { /* ignore */ }
   return defaultData();
@@ -156,7 +158,7 @@ export function useEventTracker() {
       }
 
       // Track menu actions used
-      const menuActions = ["chat", "search", "music", "nap", "home", "settings", "journal", "achievements", "friends"];
+      const menuActions = ["chat", "search", "music", "nap", "home", "settings", "journal", "achievements", "friends", "feed", "notes"];
       if (menuActions.includes(type) && !next.menuActionsUsed.includes(type)) {
         next.menuActionsUsed = [...prev.menuActionsUsed, type];
       }
@@ -209,6 +211,13 @@ export function useEventTracker() {
           break;
         case "themeImport":
           next.themeImports++;
+          break;
+        case "feed":
+          next.feeds = (prev.feeds || 0) + 1;
+          if (meta) {
+            const snacks = prev.feedsBySnack || {};
+            next.feedsBySnack = { ...snacks, [meta]: (snacks[meta] || 0) + 1 };
+          }
           break;
       }
 

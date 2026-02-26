@@ -48,6 +48,8 @@ const TIERED: AchievementDef[] = [
     tiers: [{ tier: "bronze", threshold: 5 }, { tier: "silver", threshold: 25 }, { tier: "gold", threshold: 100 }] },
   { id: "style_icon", name: "Style Icon", description: "Import custom themes", icon: "🎨", type: "tiered",
     tiers: [{ tier: "bronze", threshold: 1 }, { tier: "silver", threshold: 3 }, { tier: "gold", threshold: 10 }] },
+  { id: "gourmet", name: "Gourmet", description: "Feed the pet", icon: "🍽️", type: "tiered",
+    tiers: [{ tier: "bronze", threshold: 5 }, { tier: "silver", threshold: 25 }, { tier: "gold", threshold: 100 }] },
 ];
 
 function metricForTiered(id: string, data: EventData): number {
@@ -64,6 +66,7 @@ function metricForTiered(id: string, data: EventData): number {
     case "streak_master": return data.currentStreak;
     case "alarm_clock": return data.wakes;
     case "style_icon": return data.themeImports;
+    case "gourmet": return data.feeds;
     default: return 0;
   }
 }
@@ -79,7 +82,7 @@ const ONE_TIME: AchievementDef[] = [
     check: () => { const h = new Date().getHours(); return h >= 2 && h < 4; } },
   { id: "explorer", name: "Explorer", description: "Use every menu action at least once", icon: "🧭", type: "oneTime",
     check: (d) => {
-      const required = ["chat", "search", "music", "nap", "home", "settings", "journal", "achievements"];
+      const required = ["chat", "search", "music", "nap", "home", "settings", "journal", "achievements", "feed"];
       return required.every((a) => d.menuActionsUsed.includes(a));
     } },
   { id: "speed_chatter", name: "Speed Chatter", description: "5 chats within 2 minutes", icon: "⚡", type: "hidden",
@@ -115,7 +118,9 @@ const ONE_TIME: AchievementDef[] = [
   { id: "the_collector", name: "The Collector", description: "Unlock 15 achievements", icon: "🗃️", type: "oneTime" },
   { id: "diary_reader", name: "Diary Reader", description: "Open the journal", icon: "📖", type: "oneTime" },
   { id: "trophy_hunter", name: "Trophy Hunter", description: "Open the achievements panel", icon: "🏆", type: "oneTime" },
-  { id: "completionist", name: "Completionist", description: "Unlock all 31 other achievements", icon: "👑", type: "hidden" },
+  { id: "food_critic", name: "Food Critic", description: "Try every snack", icon: "👨‍🍳", type: "hidden",
+    check: (d) => Object.keys(d.feedsBySnack || {}).length >= 6 },
+  { id: "completionist", name: "Completionist", description: "Unlock all 33 other achievements", icon: "👑", type: "hidden" },
   { id: "lullaby", name: "Lullaby", description: "Start music while pet is napping", icon: "🎶", type: "hidden" },
   { id: "chatterbox_deluxe", name: "Chatty Cathy", description: "Send 50 chats in one day", icon: "🗣️", type: "hidden",
     check: (d) => d.dailyChats >= 50 },
@@ -195,7 +200,7 @@ export function useAchievements(eventData: EventData) {
       }
       if (def.id === "completionist") {
         const total = countUnlocked({ ...current, ...updates });
-        if (total >= 31) {
+        if (total >= 33) {
           updates[def.id] = { unlockedAt: Date.now() };
           newUnlocks.push({ id: def.id, name: def.name, icon: def.icon });
         }
