@@ -1,0 +1,16 @@
+{
+  "name": "desktop-pet-remotion",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render CatWalk out/cat-walk.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.242",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "4.0.242",
+    "typescript": "^5.5.0"
+  }
+}

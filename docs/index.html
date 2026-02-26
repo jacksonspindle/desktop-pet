@@ -4,35 +4,66 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Desktop Pet</title>
+  <meta name="description" content="A little AI-powered cat that lives on your desktop. It roams around, chats with you, and hangs out with your friends' cats.">
   <link rel="icon" href="icon.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
+    html { scroll-behavior: smooth; }
     body {
       font-family: 'Nunito', sans-serif;
       background: #faf8f5;
       color: #333;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      -webkit-font-smoothing: antialiased;
     }
 
+    /* ── Hero ── */
     .hero {
+      position: relative;
+      height: 100vh;
+      min-height: 600px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: opacity 0s;
+    }
+    .hero-fallback {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, #B8A9D4 0%, #DEC8E8 20%, #F2DDD0 45%, #FDEBD3 65%, #DCE8DC 100%);
+    }
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.22) 0%,
+        rgba(0, 0, 0, 0.08) 40%,
+        rgba(0, 0, 0, 0.18) 100%
+      );
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
       text-align: center;
-      padding: 80px 24px 40px;
+      padding: 2rem;
       max-width: 600px;
     }
-
     .cat-container {
-      position: relative;
       width: 128px;
       height: 128px;
-      margin: 0 auto 32px;
+      margin: 0 auto 28px;
     }
-
     .cat-sprite {
       width: 128px;
       height: 128px;
@@ -42,32 +73,36 @@
       image-rendering: pixelated;
       image-rendering: crisp-edges;
       animation: sprite-idle 1.2s steps(8) infinite;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
     }
-
     @keyframes sprite-idle {
       from { background-position: 0 0; }
       to { background-position: -1024px 0; }
     }
-
-    h1 {
-      font-size: 48px;
+    .hero-content h1 {
+      font-size: 52px;
       font-weight: 800;
-      color: #333;
-      margin-bottom: 12px;
+      color: white;
+      text-shadow: 0 2px 24px rgba(0, 0, 0, 0.2);
+      margin-bottom: 8px;
     }
-
-    h1 span {
-      color: #e8a33c;
+    .hero-content h1 span {
+      color: #f5c662;
     }
-
     .tagline {
-      font-size: 20px;
-      color: #888;
+      font-size: 19px;
+      color: rgba(255, 255, 255, 0.92);
+      text-shadow: 0 1px 12px rgba(0, 0, 0, 0.15);
       font-weight: 600;
-      margin-bottom: 40px;
       line-height: 1.5;
+      margin-bottom: 36px;
     }
-
+    .download-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
     .download-btn {
       display: inline-flex;
       align-items: center;
@@ -83,141 +118,361 @@
       cursor: pointer;
       text-decoration: none;
       transition: all 0.2s ease;
-      box-shadow: 0 4px 16px rgba(232, 163, 60, 0.35);
+      box-shadow: 0 4px 20px rgba(232, 163, 60, 0.4);
     }
-
     .download-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(232, 163, 60, 0.45);
+      box-shadow: 0 6px 28px rgba(232, 163, 60, 0.5);
       background: #d4922e;
     }
-
     .download-btn svg {
       width: 20px;
       height: 20px;
     }
-
-    .download-group {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-
     .download-alt {
       font-size: 13px;
-      color: #e8a33c;
+      color: rgba(255, 255, 255, 0.8);
       text-decoration: none;
       font-weight: 600;
       display: none;
     }
-
     .download-alt:hover {
       text-decoration: underline;
+      color: white;
     }
-
     .platform-note {
-      margin-top: 12px;
+      margin-top: 8px;
       font-size: 13px;
-      color: #bbb;
+      color: rgba(255, 255, 255, 0.55);
+    }
+    .github-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 16px;
+      padding: 10px 24px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 100px;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      transition: all 0.2s ease;
+    }
+    .github-link:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+    .scroll-hint {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      animation: float 2s ease-in-out infinite;
+    }
+    .scroll-hint svg {
+      display: block;
+      margin: 4px auto 0;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(6px); }
     }
 
+    /* ── Features ── */
+    .features-section {
+      padding: 80px 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .features-section h2 {
+      text-align: center;
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .features-subtitle {
+      text-align: center;
+      color: #999;
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 48px;
+    }
     .features {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 20px;
-      max-width: 640px;
-      padding: 40px 24px 60px;
-      width: 100%;
     }
-
     .feature {
       background: white;
       border: 2px solid #eee;
       border-radius: 16px;
-      padding: 24px;
+      padding: 28px;
       text-align: center;
       transition: all 0.2s ease;
     }
-
     .feature:hover {
       border-color: #e8a33c;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      transform: translateY(-2px);
     }
-
     .feature-icon {
       font-size: 32px;
       margin-bottom: 12px;
     }
-
     .feature h3 {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 700;
       margin-bottom: 6px;
     }
-
     .feature p {
-      font-size: 13px;
+      font-size: 14px;
       color: #999;
       line-height: 1.5;
     }
 
-    .footer {
-      padding: 24px;
-      font-size: 12px;
-      color: #ccc;
+    /* ── Radial Menu Demo ── */
+    .demo-section {
+      padding: 40px 24px 0;
+      text-align: center;
+      margin: 0 auto;
+    }
+    .demo-section h2 {
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .demo-subtitle {
+      color: #999;
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 0;
+    }
+    .demo-video-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+    }
+    .demo-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: opacity 0s;
     }
 
+    /* ── Download Section ── */
+    .download-section {
+      padding: 80px 24px;
+      text-align: center;
+      background: linear-gradient(180deg, #f5f0ff 0%, #fff5ec 100%);
+    }
+    .download-section h2 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .download-section > p {
+      color: #999;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 32px;
+    }
+    .download-cards {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .download-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 28px;
+      background: #1a1a1a;
+      color: white;
+      border-radius: 16px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      min-width: 240px;
+    }
+    .download-card:hover {
+      transform: translateY(-2px);
+      background: #333;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+    .download-card svg { flex-shrink: 0; }
+    .download-card-text { text-align: left; }
+    .download-card-label {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      font-weight: 600;
+    }
+    .download-card-name {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .download-note {
+      color: #bbb;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 13px;
+      color: #ccc;
+      font-weight: 600;
+    }
     .footer a {
       color: #e8a33c;
       text-decoration: none;
     }
+    .footer a:hover { text-decoration: underline; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .hero-content h1 { font-size: 36px; }
+      .tagline { font-size: 16px; }
+      .features-section h2 { font-size: 28px; }
+      .download-section h2 { font-size: 24px; }
+      .features { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <div class="hero">
-    <div class="cat-container">
-      <div class="cat-sprite"></div>
-    </div>
-    <h1>Desktop <span>Pet</span></h1>
-    <p class="tagline">A little cat that lives on your desktop.<br>Chat with it, watch it explore, and hang out with friends.</p>
-    <div class="download-group">
-      <a id="download-btn" class="download-btn" href="#">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        <span id="download-label">Download for macOS</span>
+
+  <!-- Hero with video background -->
+  <section class="hero">
+    <div class="hero-fallback"></div>
+    <video class="hero-video" id="vid-a" muted playsinline>
+      <source src="hero.webm" type="video/webm">
+      <source src="hero.mp4" type="video/mp4">
+    </video>
+    <video class="hero-video" id="vid-b" muted playsinline style="opacity:0">
+      <source src="hero.webm" type="video/webm">
+      <source src="hero.mp4" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="cat-container">
+        <div class="cat-sprite"></div>
+      </div>
+      <h1>Desktop <span>Pet</span></h1>
+      <p class="tagline">A little cat that lives on your desktop.<br>Chat with it, watch it explore, and hang out with friends.</p>
+      <div class="download-group">
+        <a id="download-btn" class="download-btn" href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span id="download-label">Download for macOS</span>
+        </a>
+        <a id="download-alt" class="download-alt" href="#"></a>
+        <p class="platform-note" id="platform-note">Requires macOS 12 or later</p>
+      </div>
+      <a class="github-link" href="https://github.com/jacksonspindle/desktop-pet">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        View on GitHub
       </a>
-      <a id="download-alt" class="download-alt" href="#"></a>
     </div>
-    <p class="platform-note" id="platform-note">Requires macOS 12 or later</p>
-  </div>
+    <div class="scroll-hint">
+      Scroll to explore
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </section>
 
-  <div class="features">
-    <div class="feature">
-      <div class="feature-icon">🐱</div>
-      <h3>Always On Screen</h3>
-      <p>Your cat roams your desktop, naps, and reacts to what you're doing.</p>
+  <!-- Features -->
+  <section class="features-section">
+    <h2>Everything your cat can do</h2>
+    <p class="features-subtitle">Your desktop companion is packed with personality.</p>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🐱</div>
+        <h3>Always On Screen</h3>
+        <p>Your cat roams your desktop, naps, and reacts to what you're doing.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">💬</div>
+        <h3>AI Chat</h3>
+        <p>Talk to your cat and get witty, context-aware responses powered by Claude.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🔍</div>
+        <h3>Web Search</h3>
+        <p>Ask your cat to look things up. It fetches answers from the web for you.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🤝</div>
+        <h3>Hang Out</h3>
+        <p>Add friends and your cats can visit each other's desktops in real-time.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎨</div>
+        <h3>Customize</h3>
+        <p>Pick from different breeds, colors, or import your own sprites.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🏆</div>
+        <h3>Achievements</h3>
+        <p>Unlock 32 achievements and read daily diary entries from your cat.</p>
+      </div>
     </div>
-    <div class="feature">
-      <div class="feature-icon">💬</div>
-      <h3>AI Chat</h3>
-      <p>Talk to your cat and get witty, context-aware responses.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🤝</div>
-      <h3>Hang Out</h3>
-      <p>Add friends and your cats can visit each other's desktops.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🎨</div>
-      <h3>Customize</h3>
-      <p>Pick from different breeds, colors, or import your own sprites.</p>
-    </div>
-  </div>
+  </section>
 
+  <!-- Radial Menu Demo -->
+  <section class="demo-section">
+    <h2>Click your cat to do anything</h2>
+    <p class="demo-subtitle">A radial menu puts everything at your fingertips.</p>
+    <div class="demo-video-container">
+      <video class="demo-video" id="demo-vid-a" muted playsinline>
+        <source src="radial-menu.webm" type="video/webm">
+        <source src="radial-menu.mp4" type="video/mp4">
+      </video>
+      <video class="demo-video" id="demo-vid-b" muted playsinline style="opacity:0">
+        <source src="radial-menu.webm" type="video/webm">
+        <source src="radial-menu.mp4" type="video/mp4">
+      </video>
+    </div>
+  </section>
+
+  <!-- Download -->
+  <section class="download-section" id="download">
+    <h2>Get Desktop Pet</h2>
+    <p>Free and open source. Available for macOS.</p>
+    <div class="download-cards">
+      <a id="dl-arm" href="#" class="download-card">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        <div class="download-card-text">
+          <div class="download-card-label">Download for</div>
+          <div class="download-card-name">macOS (Apple Silicon)</div>
+        </div>
+      </a>
+      <a id="dl-intel" href="#" class="download-card">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        <div class="download-card-text">
+          <div class="download-card-label">Download for</div>
+          <div class="download-card-name">macOS (Intel)</div>
+        </div>
+      </a>
+    </div>
+    <p class="download-note">On first launch, right-click and select <strong>Open</strong> to bypass Gatekeeper.</p>
+  </section>
+
+  <!-- Footer -->
   <div class="footer">
     Made with care &mdash; <a href="https://github.com/jacksonspindle/desktop-pet">GitHub</a>
   </div>
@@ -227,6 +482,8 @@
     const label = document.getElementById('download-label');
     const alt = document.getElementById('download-alt');
     const note = document.getElementById('platform-note');
+    const dlArm = document.getElementById('dl-arm');
+    const dlIntel = document.getElementById('dl-intel');
     const ua = navigator.userAgent.toLowerCase();
 
     const repo = 'jacksonspindle/desktop-pet';
@@ -235,8 +492,12 @@
     const armDmg = `${base}/Desktop.Pet_0.1.0_aarch64.dmg`;
     const intelDmg = `${base}/Desktop.Pet_0.1.0_x64.dmg`;
 
+    // Bottom download cards always link to releases
+    dlArm.href = armDmg;
+    dlIntel.href = intelDmg;
+
+    // Hero button adapts to platform
     if (ua.includes('mac') || ua.includes('darwin')) {
-      // Default to Apple Silicon, show Intel as alternate
       btn.href = armDmg;
       label.textContent = 'Download for macOS (Apple Silicon)';
       alt.href = intelDmg;
@@ -252,6 +513,85 @@
       label.textContent = 'View Downloads';
       note.textContent = 'macOS (Apple Silicon & Intel) available';
     }
+    // ── Seamless video loop ──
+    // Two stacked videos swap just before the end so there's no gap.
+    const vidA = document.getElementById('vid-a');
+    const vidB = document.getElementById('vid-b');
+    let active = vidA, standby = vidB;
+    const SWAP_OFFSET = 0.3; // seconds before end to trigger swap
+
+    function swapVideos() {
+      // Start standby from the beginning and show it
+      standby.currentTime = 0;
+      standby.play();
+      standby.style.opacity = '1';
+      // Hide the one that just ended
+      active.style.opacity = '0';
+      // Swap roles
+      const tmp = active;
+      active = standby;
+      standby = tmp;
+    }
+
+    function onTimeUpdate() {
+      if (this.duration - this.currentTime <= SWAP_OFFSET) {
+        this.removeEventListener('timeupdate', onTimeUpdate);
+        swapVideos();
+        // Re-attach listener to the new active video
+        active.addEventListener('timeupdate', onTimeUpdate);
+      }
+    }
+
+    // Wait for both videos to be ready, then start
+    let ready = 0;
+    function onCanPlay() {
+      ready++;
+      if (ready >= 2) {
+        vidA.play();
+        vidA.addEventListener('timeupdate', onTimeUpdate);
+      }
+    }
+    vidA.addEventListener('canplaythrough', onCanPlay, { once: true });
+    vidB.addEventListener('canplaythrough', onCanPlay, { once: true });
+    // Trigger load on both
+    vidA.load();
+    vidB.load();
+
+    // ── Demo video seamless loop ──
+    const demoVidA = document.getElementById('demo-vid-a');
+    const demoVidB = document.getElementById('demo-vid-b');
+    let demoActive = demoVidA, demoStandby = demoVidB;
+
+    function swapDemoVideos() {
+      demoStandby.currentTime = 0;
+      demoStandby.play();
+      demoStandby.style.opacity = '1';
+      demoActive.style.opacity = '0';
+      const tmp = demoActive;
+      demoActive = demoStandby;
+      demoStandby = tmp;
+    }
+
+    function onDemoTimeUpdate() {
+      if (this.duration - this.currentTime <= SWAP_OFFSET) {
+        this.removeEventListener('timeupdate', onDemoTimeUpdate);
+        swapDemoVideos();
+        demoActive.addEventListener('timeupdate', onDemoTimeUpdate);
+      }
+    }
+
+    let demoReady = 0;
+    function onDemoCanPlay() {
+      demoReady++;
+      if (demoReady >= 2) {
+        demoVidA.play();
+        demoVidA.addEventListener('timeupdate', onDemoTimeUpdate);
+      }
+    }
+    demoVidA.addEventListener('canplaythrough', onDemoCanPlay, { once: true });
+    demoVidB.addEventListener('canplaythrough', onDemoCanPlay, { once: true });
+    demoVidA.load();
+    demoVidB.load();
   </script>
 </body>
 </html>
