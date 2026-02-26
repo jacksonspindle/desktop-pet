@@ -51,8 +51,9 @@ pub fn run() {
                         ));
                     }
                 }
-                // Make the window ignore cursor events by default
-                let _ = window.set_ignore_cursor_events(true);
+                // Start accepting cursor events; the passthrough hook will
+                // toggle ignore on/off once it begins polling.
+                let _ = window.set_ignore_cursor_events(false);
                 // Show window after positioning
                 let _ = window.show();
             }

@@ -16,12 +16,13 @@ interface PassthroughConfig {
 }
 
 export function useCursorPassthrough({ petX, petY, overlayOpen, extraHitZones }: PassthroughConfig) {
-  const ignoring = useRef(true);
+  const ignoring = useRef(false); // match initial Rust state (false)
   const configRef = useRef({ petX, petY, overlayOpen, extraHitZones });
   configRef.current = { petX, petY, overlayOpen, extraHitZones };
 
   useEffect(() => {
     let running = true;
+    let consecutiveErrors = 0;
 
     const poll = async () => {
       while (running) {
@@ -37,7 +38,8 @@ export function useCursorPassthrough({ petX, petY, overlayOpen, extraHitZones }:
           } else {
             // Check if mouse is near the pet or any extra hit zones
             const mouse = await invoke<{ x: number; y: number }>("get_mouse_position");
-            const hitSize = 48;
+            consecutiveErrors = 0;
+            const hitSize = 64;
             const nearPet =
               mouse.x >= px - hitSize &&
               mouse.x <= px + hitSize &&
@@ -63,8 +65,18 @@ export function useCursorPassthrough({ petX, petY, overlayOpen, extraHitZones }:
               await invoke("set_ignore_cursor_events", { ignore: true });
             }
           }
-        } catch {
-          // ignore
+        } catch (e) {
+          consecutiveErrors++;
+          // If mouse position polling keeps failing, ensure the pet stays
+          // clickable rather than being stuck in ignore mode
+          if (consecutiveErrors > 5 && ignoring.current) {
+            ignoring.current = false;
+            try {
+              await invoke("set_ignore_cursor_events", { ignore: false });
+            } catch {
+              // last resort failed
+            }
+          }
         }
         await new Promise((r) => setTimeout(r, 50));
       }
