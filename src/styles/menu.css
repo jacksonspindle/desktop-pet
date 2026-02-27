@@ -184,3 +184,131 @@
   75% { transform: scale(1.15) rotate(3deg); }
   100% { transform: scale(1.15) rotate(0deg); }
 }
+
+/* "More" button variant in radial */
+.radial-more-btn .menu-icon {
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: #b08530;
+}
+
+/* ── More Menu Panel ── */
+.more-menu-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.3);
+  animation: feed-fade-in 0.2s ease-out;
+}
+
+.more-menu-panel {
+  background: #faf8f5;
+  border-radius: 16px;
+  padding: 20px 24px 24px;
+  width: 340px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  border: 2px solid #ddd;
+  animation: menu-pop 0.2s ease-out;
+}
+
+.more-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.more-menu-title {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 18px;
+  color: #333;
+  font-weight: bold;
+}
+
+.more-menu-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  transition: all 0.15s ease;
+}
+
+.more-menu-close:hover {
+  border-color: #e8a33c;
+  color: #333;
+  background: #fff3e0;
+}
+
+.more-menu-category {
+  margin-bottom: 14px;
+}
+
+.more-menu-category:last-child {
+  margin-bottom: 0;
+}
+
+.more-menu-category-label {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #b08530;
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+
+.more-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.more-menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: white;
+  border: 1.5px solid transparent;
+}
+
+.more-menu-item:hover {
+  background: #fff3e0;
+  border-color: #e8a33c;
+  transform: scale(1.05);
+}
+
+.more-menu-item:active {
+  transform: scale(0.95);
+}
+
+.more-menu-item-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.more-menu-item-label {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+  font-size: 10px;
+  font-weight: 600;
+  color: #555;
+  text-align: center;
+}

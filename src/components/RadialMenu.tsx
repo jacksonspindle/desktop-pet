@@ -3,7 +3,7 @@ import "../styles/menu.css";
 export type MenuAction = "chat" | "search" | "music" | "nap" | "home" | "settings" | "journal" | "achievements" | "friends" | "notes" | "feed" | "timer";
 
 interface MenuItem {
-  action: MenuAction;
+  action: MenuAction | "more";
   icon: string;
   label: string;
 }
@@ -13,34 +13,23 @@ interface RadialMenuProps {
   y: number;
   musicPlaying?: boolean;
   onSelect: (action: MenuAction) => void;
+  onMore: () => void;
   onClose: () => void;
 }
 
-const MENU_ITEMS: MenuItem[] = [
+const RADIAL_ITEMS: MenuItem[] = [
   { action: "chat", icon: "\uD83D\uDCAC", label: "Chat" },
   { action: "search", icon: "\uD83D\uDD0D", label: "Search" },
-  { action: "music", icon: "\uD83C\uDFB5", label: "Music" },
+  { action: "feed", icon: "\uD83C\uDF63", label: "Feed" },
   { action: "nap", icon: "\uD83D\uDE34", label: "Nap" },
   { action: "home", icon: "\uD83C\uDFE0", label: "Home" },
-  { action: "settings", icon: "\u2699\uFE0F", label: "Style" },
-  { action: "journal", icon: "\uD83D\uDCD6", label: "Journal" },
-  { action: "achievements", icon: "\uD83C\uDFC6", label: "Trophies" },
-  { action: "friends", icon: "\uD83D\uDC3E", label: "Friends" },
-  { action: "notes", icon: "\uD83D\uDCDD", label: "Notes" },
-  { action: "feed", icon: "\uD83C\uDF63", label: "Feed" },
-  { action: "timer", icon: "\u23F1\uFE0F", label: "Timer" },
+  { action: "more", icon: "\u2022\u2022\u2022", label: "More" },
 ];
 
 const BUTTON_SIZE = 56;
-const RADIUS = 105;
+const RADIUS = 90;
 
-export default function RadialMenu({ x, y, musicPlaying, onSelect, onClose }: RadialMenuProps) {
-  const items = MENU_ITEMS.map((item) =>
-    item.action === "music" && musicPlaying
-      ? { ...item, icon: "\uD83D\uDD07", label: "Mute" }
-      : item,
-  );
-
+export default function RadialMenu({ x, y, musicPlaying, onSelect, onMore, onClose }: RadialMenuProps) {
   return (
     <>
       <div
@@ -59,15 +48,18 @@ export default function RadialMenu({ x, y, musicPlaying, onSelect, onClose }: Ra
           top: y,
         }}
       >
-        {items.map((item, i) => {
-          const angle = (i / MENU_ITEMS.length) * 2 * Math.PI - Math.PI / 2;
+        {RADIAL_ITEMS.map((item, i) => {
+          const angle = (i / RADIAL_ITEMS.length) * 2 * Math.PI - Math.PI / 2;
           const ix = Math.cos(angle) * RADIUS - BUTTON_SIZE / 2;
           const iy = Math.sin(angle) * RADIUS - BUTTON_SIZE / 2;
+
+          const icon = item.action === "music" && musicPlaying ? "\uD83D\uDD07" : item.icon;
+          const label = item.action === "music" && musicPlaying ? "Mute" : item.label;
 
           return (
             <div
               key={item.action}
-              className="radial-menu-item"
+              className={`radial-menu-item${item.action === "more" ? " radial-more-btn" : ""}`}
               style={{
                 width: BUTTON_SIZE,
                 height: BUTTON_SIZE,
@@ -77,11 +69,15 @@ export default function RadialMenu({ x, y, musicPlaying, onSelect, onClose }: Ra
               } as React.CSSProperties}
               onClick={(e) => {
                 e.stopPropagation();
-                onSelect(item.action);
+                if (item.action === "more") {
+                  onMore();
+                } else {
+                  onSelect(item.action as MenuAction);
+                }
               }}
             >
-              <span className="menu-icon">{item.icon}</span>
-              <span className="menu-label">{item.label}</span>
+              <span className="menu-icon">{icon}</span>
+              <span className="menu-label">{label}</span>
             </div>
           );
         })}

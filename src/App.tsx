@@ -13,6 +13,7 @@ import FriendsPanel from "./components/FriendsPanel";
 import VisitingPet from "./components/VisitingPet";
 import StickyNoteComponent from "./components/StickyNote";
 import NotesPanel from "./components/NotesPanel";
+import MoreMenu from "./components/MoreMenu";
 import SnackPanel, { Snack } from "./components/SnackPanel";
 import FeedAnimation from "./components/FeedAnimation";
 import TimerPanel from "./components/TimerPanel";
@@ -78,6 +79,7 @@ export default function App() {
   const [achievementsOpen, setAchievementsOpen] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
   const [feedOpen, setFeedOpen] = useState(false);
   const [feedingSnack, setFeedingSnack] = useState<{ snack: Snack; startX: number; startY: number; skipFly?: boolean } | null>(null);
@@ -102,7 +104,7 @@ export default function App() {
     }
   }, [nearPet, draggingSnack]);
 
-  const overlayOpen = menuOpen || paletteOpen || dragging || settingsOpen || journalOpen || achievementsOpen || friendsOpen || notesOpen || timerOpen || feedOpen || !!draggingSnack || visitorOverlay;
+  const overlayOpen = menuOpen || paletteOpen || dragging || settingsOpen || journalOpen || achievementsOpen || friendsOpen || notesOpen || moreOpen || timerOpen || feedOpen || !!draggingSnack || visitorOverlay;
 
   const extraHitZones = [
     ...(visitorPos ? [visitorPos] : []),
@@ -149,6 +151,7 @@ export default function App() {
         setAchievementsOpen(false);
         setFriendsOpen(false);
         setNotesOpen(false);
+        setMoreOpen(false);
         setTimerOpen(false);
         setFeedOpen(false);
         setPaletteOpen(true);
@@ -176,7 +179,7 @@ export default function App() {
   }, [setDragging, trackEvent]);
 
   const handlePetClick = useCallback(() => {
-    if (settingsOpen || journalOpen || achievementsOpen || friendsOpen || notesOpen || timerOpen || feedOpen) return;
+    if (settingsOpen || journalOpen || achievementsOpen || friendsOpen || notesOpen || moreOpen || timerOpen || feedOpen) return;
     trackEvent("petClick");
     if (state === "napping") {
       wake();
@@ -192,7 +195,7 @@ export default function App() {
     if (visible && !menuOpen) dismiss();
     setMenuOpen((prev) => !prev);
     setPaletteOpen(false);
-  }, [state, wake, leaveHome, generate, dismiss, visible, menuOpen, settingsOpen, journalOpen, achievementsOpen, friendsOpen, notesOpen, timerOpen, feedOpen, trackEvent]);
+  }, [state, wake, leaveHome, generate, dismiss, visible, menuOpen, settingsOpen, journalOpen, achievementsOpen, friendsOpen, notesOpen, moreOpen, timerOpen, feedOpen, trackEvent]);
 
   const handleMenuSelect = useCallback(
     (action: MenuAction) => {
@@ -395,7 +398,7 @@ export default function App() {
         onDragEnd={handleDragEnd}
       />
 
-      {visible && !menuOpen && !paletteOpen && !settingsOpen && !journalOpen && !achievementsOpen && !friendsOpen && !notesOpen && !timerOpen && !feedOpen && !feedingSnack && !draggingSnack && (
+      {visible && !menuOpen && !paletteOpen && !settingsOpen && !journalOpen && !achievementsOpen && !friendsOpen && !notesOpen && !moreOpen && !timerOpen && !feedOpen && !feedingSnack && !draggingSnack && (
         <SpeechBubble
           text={loading ? "..." : text}
           x={position.x}
@@ -410,7 +413,16 @@ export default function App() {
           y={position.y}
           musicPlaying={musicPlaying}
           onSelect={handleMenuSelect}
+          onMore={() => { setMenuOpen(false); setMoreOpen(true); }}
           onClose={() => setMenuOpen(false)}
+        />
+      )}
+
+      {moreOpen && (
+        <MoreMenu
+          musicPlaying={musicPlaying}
+          onSelect={(action) => { setMoreOpen(false); handleMenuSelect(action); }}
+          onClose={() => setMoreOpen(false)}
         />
       )}
 
