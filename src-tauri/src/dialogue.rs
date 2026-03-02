@@ -1,6 +1,12 @@
 use serde::{Deserialize, Serialize};
+use std::sync::OnceLock;
 
 use crate::memory;
+
+fn http_client() -> &'static reqwest::Client {
+    static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+    CLIENT.get_or_init(reqwest::Client::new)
+}
 
 #[derive(Serialize)]
 struct ClaudeRequest {
@@ -231,8 +237,7 @@ pub async fn generate_pet_dialogue(
         tools,
     };
 
-    let client = reqwest::Client::new();
-    let response = client
+    let response = http_client()
         .post("https://api.anthropic.com/v1/messages")
         .header("x-api-key", &api_key)
         .header("anthropic-version", "2023-06-01")

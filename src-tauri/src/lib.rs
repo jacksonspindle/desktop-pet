@@ -90,17 +90,32 @@ struct MousePosition {
 
 #[tauri::command]
 fn get_mouse_position() -> Result<MousePosition, String> {
-    use core_graphics::event::CGEvent;
-    use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
+    // Use the CoreGraphics C API directly to avoid leaking CGEvent/CGEventSource
+    // objects. The core_graphics crate wrappers allocate CF objects that don't
+    // always get released properly under high-frequency polling.
+    extern "C" {
+        fn CGEventCreate(source: *const std::ffi::c_void) -> *const std::ffi::c_void;
+        fn CGEventGetLocation(event: *const std::ffi::c_void) -> CGPoint;
+        fn CFRelease(cf: *const std::ffi::c_void);
+    }
 
-    let source = CGEventSource::new(CGEventSourceStateID::CombinedSessionState)
-        .map_err(|_| "Failed to create event source".to_string())?;
-    let event = CGEvent::new(source)
-        .map_err(|_| "Failed to create event".to_string())?;
-    let point = event.location();
+    #[repr(C)]
+    #[derive(Copy, Clone)]
+    struct CGPoint {
+        x: f64,
+        y: f64,
+    }
 
-    Ok(MousePosition {
-        x: point.x,
-        y: point.y,
-    })
+    unsafe {
+        let event = CGEventCreate(std::ptr::null());
+        if event.is_null() {
+            return Err("Failed to create event".to_string());
+        }
+        let point = CGEventGetLocation(event);
+        CFRelease(event);
+        Ok(MousePosition {
+            x: point.x,
+            y: point.y,
+        })
+    }
 }

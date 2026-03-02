@@ -78,7 +78,7 @@ export function useCursorPassthrough({ petX, petY, overlayOpen, extraHitZones }:
             }
           }
         }
-        await new Promise((r) => setTimeout(r, 50));
+        await new Promise((r) => setTimeout(r, 200));
       }
     };
 
