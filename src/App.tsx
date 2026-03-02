@@ -18,6 +18,7 @@ import SnackPanel, { Snack } from "./components/SnackPanel";
 import FeedAnimation from "./components/FeedAnimation";
 import TimerPanel from "./components/TimerPanel";
 import TimerBubble from "./components/TimerBubble";
+import HungerBar from "./components/HungerBar";
 import { usePetMovement } from "./hooks/usePetMovement";
 import { useActiveWindow } from "./hooks/useActiveWindow";
 import { useDialogue } from "./hooks/useDialogue";
@@ -30,6 +31,7 @@ import { useJournal } from "./hooks/useJournal";
 import { useFriends } from "./hooks/useFriends";
 import { useNotes } from "./hooks/useNotes";
 import { useTimer } from "./hooks/useTimer";
+import { useHunger, HungerLevel } from "./hooks/useHunger";
 
 const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Space";
 
@@ -53,6 +55,20 @@ export default function App() {
     appChanged,
     addNote,
   );
+  const lastHungerCommentRef = useRef(0);
+  const HUNGER_SEVERITY: Record<HungerLevel, number> = { full: 0, peckish: 1, hungry: 2, starving: 3 };
+  const hunger = useHunger({
+    onLevelChange: (level, prevLevel) => {
+      // Only comment when hunger worsens
+      if (HUNGER_SEVERITY[level] <= HUNGER_SEVERITY[prevLevel]) return;
+      if (level !== "hungry" && level !== "starving") return;
+      const now = Date.now();
+      if (now - lastHungerCommentRef.current < 3 * 60 * 1000) return;
+      lastHungerCommentRef.current = now;
+      generate("hungry", level === "starving" ? "starving" : "getting hungry");
+    },
+  });
+
   const { breed, color, currentTheme, customThemes, selectBreed, selectColor, addCustomTheme, removeCustomTheme } =
     useTheme();
   const { playing: musicPlaying, toggle: toggleMusic } = useAmbientMusic();
@@ -114,6 +130,7 @@ export default function App() {
       return { x: (pos?.x ?? n.x) + 90, y: (pos?.y ?? n.y) + 40, w: 200, h: 100 };
     }) : []),
     ...(timer.running ? [{ x: position.x - 50, y: position.y - 60, w: 80, h: 30 }] : []),
+    { x: position.x - 26, y: position.y + 33, w: 52, h: 6 },
   ];
 
   useCursorPassthrough({
@@ -135,6 +152,20 @@ export default function App() {
       }
     }
   }, [newlyUnlocked, generate]);
+
+  // Comment on hunger if loaded already hungry/starving
+  const hungerMountRef = useRef(false);
+  useEffect(() => {
+    if (hungerMountRef.current) return;
+    hungerMountRef.current = true;
+    if (hunger.hungerLevel === "hungry" || hunger.hungerLevel === "starving") {
+      const timeout = setTimeout(() => {
+        lastHungerCommentRef.current = Date.now();
+        generate("hungry", hunger.hungerLevel === "starving" ? "starving" : "getting hungry");
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Global shortcut to toggle command palette (user-configurable)
   const paletteOpenRef = useRef(paletteOpen);
@@ -361,10 +392,11 @@ export default function App() {
     (snackName: string) => {
       setFeedingSnack(null);
       setPetExtraStyle({});
+      hunger.feed(25);
       generate("feed", `cat was fed ${snackName}`);
       setTimeout(() => setState("idle"), 3000);
     },
-    [generate, setState],
+    [generate, setState, hunger],
   );
 
   const handleThemeImport = useCallback(
@@ -559,6 +591,14 @@ export default function App() {
           y={position.y}
           remaining={timer.remaining}
           label={timer.label}
+        />
+      )}
+
+      {!overlayOpen && state !== "home" && (
+        <HungerBar
+          x={position.x}
+          y={position.y}
+          hunger={hunger.hunger}
         />
       )}
 

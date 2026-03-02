@@ -1,0 +1,47 @@
+.hunger-bar-container {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1400;
+  transform: translateX(-50%);
+  animation: hunger-bar-in 0.3s ease-out;
+}
+
+.hunger-bar-track {
+  width: 52px;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.hunger-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s linear, background-color 0.5s ease;
+}
+
+.hunger-bar-container.starving {
+  animation: hunger-pulse 2s ease-in-out infinite;
+}
+
+@keyframes hunger-bar-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes hunger-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 0px transparent);
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 4px rgba(244, 67, 54, 0.6));
+    transform: translateX(-50%) scale(1);
+  }
+}
